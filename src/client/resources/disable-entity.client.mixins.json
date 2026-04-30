@@ -1,0 +1,23 @@
+{
+	"required": true,
+	"package": "newnonsick.disable_entity.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"client": [
+		"entity.EntityRenderDispatcherMixin",
+		"shadow.EntityRenderDispatcherShadowMixin",
+		"nametag.EntityRendererMixin",
+		"particle.ParticleManagerMixin",
+		"blockentity.BlockEntityRenderDispatcherMixin",
+		"blockstate.BlockRenderManagerMixin",
+		"world.WorldRendererMixin",
+		"world.GameRendererMixin",
+		"world.InGameHudMixin",
+		"world.BackgroundRendererMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	},
+	"overwrites": {
+		"requireAnnotations": true
+	}
+}

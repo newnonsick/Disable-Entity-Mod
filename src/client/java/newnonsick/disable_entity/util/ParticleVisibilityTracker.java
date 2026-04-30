@@ -1,0 +1,44 @@
+package newnonsick.disable_entity.util;
+
+import java.util.Collection;
+import java.util.Map;
+import java.util.Queue;
+import java.util.WeakHashMap;
+
+import net.minecraft.client.particle.Particle;
+
+/**
+ * Tracks spawned particles by coarse category so hidden categories can be
+ * culled on the next tick.
+ */
+public final class ParticleVisibilityTracker {
+    private static final Map<Particle, ParticleCategory> CATEGORIES = new WeakHashMap<>();
+
+    private ParticleVisibilityTracker() {
+    }
+
+    public static void register(Particle particle, ParticleCategory category) {
+        CATEGORIES.put(particle, category);
+    }
+
+    public static void clear() {
+        CATEGORIES.clear();
+    }
+
+    public static boolean shouldCull(Particle particle) {
+        ParticleCategory category = CATEGORIES.get(particle);
+        return category != null && RenderRules.shouldHideParticleCategory(category);
+    }
+
+    public static void purgeHiddenParticles(Collection<? extends Queue<Particle>> queues) {
+        for (Queue<Particle> queue : queues) {
+            queue.removeIf(particle -> {
+                if (shouldCull(particle)) {
+                    particle.markDead();
+                    return true;
+                }
+                return false;
+            });
+        }
+    }
+}

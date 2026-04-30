@@ -1,0 +1,40 @@
+{
+	"schemaVersion": 1,
+	"id": "disable-entity",
+	"version": "${version}",
+	"name": "Disable Entity",
+	"description": "Client-side rendering optimizations for selectively hiding expensive entities, block entities, nametags, shadows, particles, world effects, and simplifying dynamic block states.",
+	"authors": [
+		"NEWNONSICK"
+	],
+	"license": "CC0-1.0",
+	"icon": "assets/disable-entity/icon.png",
+	"environment": "client",
+	"entrypoints": {
+		"main": [
+			"newnonsick.disable_entity.DisableEntity"
+		],
+		"client": [
+			"newnonsick.disable_entity.DisableEntityClient"
+		],
+		"modmenu": [
+			"newnonsick.disable_entity.client.DisableEntityModMenu"
+		]
+	},
+	"mixins": [
+		{
+			"config": "disable-entity.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.19.2",
+		"minecraft": "~1.21.8",
+		"java": ">=21",
+		"fabric-api": "*",
+		"cloth-config": ">=19.0.147"
+	},
+	"suggests": {
+		"modmenu": "*"
+	}
+}
