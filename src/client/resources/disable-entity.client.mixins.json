@@ -9,6 +9,8 @@
 		"particle.ParticleManagerMixin",
 		"blockentity.BlockEntityRenderDispatcherMixin",
 		"blockstate.BlockRenderManagerMixin",
+		"blockstate.PistonBlockEntityRendererMixin",
+		"blockstate.SectionBuilderMixin",
 		"world.WorldRendererMixin",
 		"world.GameRendererMixin",
 		"world.InGameHudMixin",

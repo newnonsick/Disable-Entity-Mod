@@ -1,12 +1,10 @@
 package newnonsick.disable_entity.util;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
-import net.minecraft.block.Blocks;
 
 class DynamicBlockRegistryTest {
 

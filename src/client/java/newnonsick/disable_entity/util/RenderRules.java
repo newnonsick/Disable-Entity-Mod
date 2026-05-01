@@ -185,6 +185,41 @@ public final class RenderRules {
         return shouldFreezeBlockState(config, state);
     }
 
+    public static BlockState getRenderableBlockState(BlockState state) {
+        if (!shouldFreezeBlockState(state)) {
+            return state;
+        }
+
+        return DynamicBlockRegistry.getInstance().getFrozenState(state);
+    }
+
+    public static boolean shouldSkipFrozenBlockStateRerender(BlockState oldState, BlockState newState) {
+        DisableEntityConfig config = DisableEntityConfigManager.getConfig();
+        return shouldSkipFrozenBlockStateRerender(config, oldState, newState);
+    }
+
+    public static boolean shouldFreezeDynamicBlockFamily(DynamicBlockFamily family) {
+        DisableEntityConfig config = DisableEntityConfigManager.getConfig();
+        return shouldFreezeBlockState(config, family);
+    }
+
+    static boolean shouldSkipFrozenBlockStateRerender(DisableEntityConfig config, BlockState oldState,
+            BlockState newState) {
+        boolean oldStateFrozen = shouldFreezeBlockState(config, oldState);
+        boolean newStateFrozen = shouldFreezeBlockState(config, newState);
+        if (!oldStateFrozen && !newStateFrozen) {
+            return false;
+        }
+
+        BlockState renderableOldState = oldStateFrozen
+                ? DynamicBlockRegistry.getInstance().getFrozenState(oldState)
+                : oldState;
+        BlockState renderableNewState = newStateFrozen
+                ? DynamicBlockRegistry.getInstance().getFrozenState(newState)
+                : newState;
+        return renderableOldState == renderableNewState || renderableOldState.equals(renderableNewState);
+    }
+
     static boolean shouldFreezeBlockState(DisableEntityConfig config, BlockState state) {
         DynamicBlockFamily family = DynamicBlockRegistry.getInstance().getFamily(state.getBlock());
         if (family == null) {

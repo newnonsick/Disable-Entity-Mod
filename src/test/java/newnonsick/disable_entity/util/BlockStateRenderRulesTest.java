@@ -29,4 +29,30 @@ class BlockStateRenderRulesTest {
 
         assertFalse(RenderRules.shouldFreezeBlockState(config, DynamicBlockFamily.REDSTONE));
     }
+
+    @Test
+    void shouldFreezeOtherDynamicOnlyWhenEnabled() {
+        DisableEntityConfig config = new DisableEntityConfig();
+        config.globalEnabled = true;
+        config.blockStates.enabled = true;
+
+        assertFalse(RenderRules.shouldFreezeBlockState(config, DynamicBlockFamily.OTHER_DYNAMIC));
+
+        config.blockStates.freezeOtherDynamic = true;
+
+        assertTrue(RenderRules.shouldFreezeBlockState(config, DynamicBlockFamily.OTHER_DYNAMIC));
+    }
+
+    @Test
+    void shouldExposeFamilyLevelFreezeDecisionForSpecialRenderers() {
+        DisableEntityConfig config = new DisableEntityConfig();
+        config.globalEnabled = true;
+        config.blockStates.enabled = true;
+
+        assertTrue(RenderRules.shouldFreezeBlockState(config, DynamicBlockFamily.PISTON));
+
+        config.blockStates.freezePistons = false;
+
+        assertFalse(RenderRules.shouldFreezeBlockState(config, DynamicBlockFamily.PISTON));
+    }
 }
