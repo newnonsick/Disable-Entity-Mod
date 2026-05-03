@@ -750,6 +750,17 @@ public final class DisableEntityConfigScreenFactory {
                 "text.disable_entity.tooltip.disable_overlays"
             )
         );
+        worldRenderCategory.addEntry(
+            booleanEntry(
+                entryBuilder,
+                Text.translatable(
+                    "text.disable_entity.option.show_performance_overlay"
+                ),
+                config.showPerformanceOverlay,
+                value -> config.showPerformanceOverlay = value,
+                "text.disable_entity.tooltip.show_performance_overlay"
+            )
+        );
 
         ConfigCategory distanceCategory = builder.getOrCreateCategory(
             Text.translatable("text.disable_entity.category.distance_culling")

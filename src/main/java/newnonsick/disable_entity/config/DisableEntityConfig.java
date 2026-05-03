@@ -27,6 +27,7 @@ public final class DisableEntityConfig {
     public BlockStateRendering blockStates = new BlockStateRendering();
     public WorldRendering worldRendering = new WorldRendering();
     public DistanceCulling distanceCulling = new DistanceCulling();
+    public boolean showPerformanceOverlay = false;
 
     public void sanitize() {
         if (configVersion <= 0 || configVersion < CURRENT_CONFIG_VERSION) {

@@ -21,6 +21,8 @@ public final class DynamicBlockRegistry {
 
     private final Map<Block, DynamicBlockFamily> familyCache =
         new ConcurrentHashMap<>();
+    private final Map<BlockState, BlockState> frozenStateCache =
+        new ConcurrentHashMap<>();
     private volatile boolean populated;
 
     private DynamicBlockRegistry() {}
@@ -47,12 +49,13 @@ public final class DynamicBlockRegistry {
             return state;
         }
 
-        return freezeState(state, family);
+        return frozenStateCache.computeIfAbsent(state, s -> freezeState(s, family));
     }
 
     public void invalidate() {
         populated = false;
         familyCache.clear();
+        frozenStateCache.clear();
     }
 
     private synchronized void populate() {

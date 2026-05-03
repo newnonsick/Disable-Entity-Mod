@@ -3,6 +3,7 @@ package newnonsick.disable_entity.util;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityType;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.entity.state.EntityRenderState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -25,14 +26,35 @@ import newnonsick.disable_entity.config.DisableEntityConfigManager;
 
 /**
  * Centralized rendering decisions shared by all client-side mixins.
+ * Uses per-frame config caching and includes a self-render safeguard.
  */
 public final class RenderRules {
+    private static volatile DisableEntityConfig cachedConfig;
+
     private RenderRules() {
     }
 
+    public static DisableEntityConfig config() {
+        DisableEntityConfig c = cachedConfig;
+        return c != null ? c : DisableEntityConfigManager.getConfig();
+    }
+
+    public static void cacheConfigForFrame() {
+        cachedConfig = DisableEntityConfigManager.getConfig();
+    }
+
+    public static void clearFrameCache() {
+        cachedConfig = null;
+    }
+
     public static boolean shouldHideEntity(Entity entity, double squaredDistanceToCamera) {
-        DisableEntityConfig config = DisableEntityConfigManager.getConfig();
+        DisableEntityConfig config = config();
         if (!config.globalEnabled || !config.entityRendering.enabled) {
+            return false;
+        }
+
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client != null && client.player != null && entity == client.player) {
             return false;
         }
 
@@ -68,6 +90,9 @@ public final class RenderRules {
         if (isItemEntity(entity)) {
             return config.entityRendering.hideItemEntities;
         }
+        if (isPlayerEntity(entity)) {
+            return config.entityRendering.hidePlayers;
+        }
         if (isHostileEntity(entity)) {
             return config.entityRendering.hideHostileMobs;
         }
@@ -79,12 +104,12 @@ public final class RenderRules {
     }
 
     public static boolean shouldHideEntityShadow() {
-        DisableEntityConfig config = DisableEntityConfigManager.getConfig();
+        DisableEntityConfig config = config();
         return config.globalEnabled && config.disableEntityShadows;
     }
 
     public static boolean shouldHideNametag(EntityRenderState state) {
-        DisableEntityConfig config = DisableEntityConfigManager.getConfig();
+        DisableEntityConfig config = config();
         if (!config.globalEnabled || !config.nametags.enabled) {
             return false;
         }
@@ -104,7 +129,7 @@ public final class RenderRules {
     }
 
     public static boolean shouldHideBlockEntity(BlockEntity blockEntity, double squaredDistanceToCamera) {
-        DisableEntityConfig config = DisableEntityConfigManager.getConfig();
+        DisableEntityConfig config = config();
         if (!config.globalEnabled || !config.blockEntities.enabled) {
             return false;
         }
@@ -147,12 +172,12 @@ public final class RenderRules {
     }
 
     public static boolean shouldHideAllParticles() {
-        DisableEntityConfig config = DisableEntityConfigManager.getConfig();
+        DisableEntityConfig config = config();
         return config.globalEnabled && config.particles.enabled && config.particles.mode == ParticleFilterMode.ALL;
     }
 
     public static boolean shouldHideParticleCategory(ParticleCategory category) {
-        DisableEntityConfig config = DisableEntityConfigManager.getConfig();
+        DisableEntityConfig config = config();
         if (!config.globalEnabled || !config.particles.enabled) {
             return false;
         }
@@ -181,7 +206,7 @@ public final class RenderRules {
     }
 
     public static boolean shouldFreezeBlockState(BlockState state) {
-        DisableEntityConfig config = DisableEntityConfigManager.getConfig();
+        DisableEntityConfig config = config();
         return shouldFreezeBlockState(config, state);
     }
 
@@ -194,12 +219,12 @@ public final class RenderRules {
     }
 
     public static boolean shouldSkipFrozenBlockStateRerender(BlockState oldState, BlockState newState) {
-        DisableEntityConfig config = DisableEntityConfigManager.getConfig();
+        DisableEntityConfig config = config();
         return shouldSkipFrozenBlockStateRerender(config, oldState, newState);
     }
 
     public static boolean shouldFreezeDynamicBlockFamily(DynamicBlockFamily family) {
-        DisableEntityConfig config = DisableEntityConfigManager.getConfig();
+        DisableEntityConfig config = config();
         return shouldFreezeBlockState(config, family);
     }
 
@@ -230,7 +255,7 @@ public final class RenderRules {
     }
 
     public static boolean shouldDisableWorldRender(String feature) {
-        DisableEntityConfig config = DisableEntityConfigManager.getConfig();
+        DisableEntityConfig config = config();
         if (!config.globalEnabled || !config.worldRendering.enabled) {
             return false;
         }
@@ -273,6 +298,10 @@ public final class RenderRules {
     private static boolean isBeyondDistanceLimit(double squaredDistanceToCamera, int maxDistance) {
         double limit = (double) maxDistance * (double) maxDistance;
         return squaredDistanceToCamera > limit;
+    }
+
+    private static boolean isPlayerEntity(Entity entity) {
+        return entity.getType() == EntityType.PLAYER;
     }
 
     private static boolean isVehicleEntity(Entity entity) {
@@ -332,29 +361,51 @@ public final class RenderRules {
     }
 
     private static boolean isExperienceOrbEntity(Entity entity) {
+        if (entity.getType() == EntityType.EXPERIENCE_ORB) {
+            return true;
+        }
+
         Identifier identifier = getEntityIdentifier(entity);
         return identifier != null && containsAny(identifier.getPath(), "experience_orb");
     }
 
     private static boolean isItemFrameEntity(Entity entity) {
+        if (entity.getType() == EntityType.ITEM_FRAME || entity.getType() == EntityType.GLOW_ITEM_FRAME) {
+            return true;
+        }
+
         Identifier identifier = getEntityIdentifier(entity);
         return identifier != null && containsAny(identifier.getPath(), "item_frame");
     }
 
     private static boolean isPaintingEntity(Entity entity) {
+        if (entity.getType() == EntityType.PAINTING) {
+            return true;
+        }
+
         Identifier identifier = getEntityIdentifier(entity);
         return identifier != null && containsAny(identifier.getPath(), "painting");
     }
 
     private static boolean isLeashKnotEntity(Entity entity) {
+        if (entity.getType() == EntityType.LEASH_KNOT) {
+            return true;
+        }
+
         Identifier identifier = getEntityIdentifier(entity);
         return identifier != null && containsAny(identifier.getPath(), "leash_knot");
     }
 
     private static boolean isDisplayEntity(Entity entity) {
+        if (entity.getType() == EntityType.BLOCK_DISPLAY
+                || entity.getType() == EntityType.ITEM_DISPLAY
+                || entity.getType() == EntityType.TEXT_DISPLAY) {
+            return true;
+        }
+
         Identifier identifier = getEntityIdentifier(entity);
-        return identifier != null && containsAny(identifier.getPath(), "block_display", "item_display", "text_display",
-                "display");
+        return identifier != null && containsAny(identifier.getPath(), "block_display", "item_display",
+                "text_display");
     }
 
     private static boolean isChestLike(BlockEntity blockEntity) {

@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -16,11 +17,17 @@ import newnonsick.disable_entity.DisableEntity;
 
 /**
  * Singleton loader and saver for the mod configuration file.
+ * Uses ReentrantReadWriteLock for concurrent read access with exclusive writes.
  */
 public final class DisableEntityConfigManager {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     private static final Path CONFIG_PATH = FabricLoader.getInstance().getConfigDir().resolve("disable-entity.json");
     private static final String TEMP_FILE_SUFFIX = ".tmp";
+    private static final int MAX_IMPORT_SIZE = 65536;
+
+    private static final ReentrantReadWriteLock LOCK = new ReentrantReadWriteLock();
+    private static final ReentrantReadWriteLock.ReadLock READ_LOCK = LOCK.readLock();
+    private static final ReentrantReadWriteLock.WriteLock WRITE_LOCK = LOCK.writeLock();
 
     private static DisableEntityConfig config = new DisableEntityConfig();
     private static boolean loaded;
@@ -28,31 +35,64 @@ public final class DisableEntityConfigManager {
     private DisableEntityConfigManager() {
     }
 
-    public static synchronized void load() {
-        if (loaded) {
-            return;
+    public static void load() {
+        WRITE_LOCK.lock();
+        try {
+            if (loaded) {
+                return;
+            }
+
+            config = readConfig();
+            config.sanitize();
+            loaded = true;
+        } finally {
+            WRITE_LOCK.unlock();
+        }
+    }
+
+    public static DisableEntityConfig getConfig() {
+        READ_LOCK.lock();
+        try {
+            if (loaded) {
+                return config;
+            }
+        } finally {
+            READ_LOCK.unlock();
         }
 
-        config = readConfig();
-        config.sanitize();
-        loaded = true;
+        WRITE_LOCK.lock();
+        try {
+            if (!loaded) {
+                config = readConfig();
+                config.sanitize();
+                loaded = true;
+            }
+            return config;
+        } finally {
+            WRITE_LOCK.unlock();
+        }
     }
 
-    public static synchronized DisableEntityConfig getConfig() {
-        load();
-        return config;
+    public static void save() {
+        WRITE_LOCK.lock();
+        try {
+            saveInternal(true, null);
+        } finally {
+            WRITE_LOCK.unlock();
+        }
     }
 
-    public static synchronized void save() {
-        saveInternal(true, null);
-    }
-
-    public static synchronized void saveWithActivePreset(OptimizationPreset activePreset) {
-        saveInternal(false, activePreset);
+    public static void saveWithActivePreset(OptimizationPreset activePreset) {
+        WRITE_LOCK.lock();
+        try {
+            saveInternal(false, activePreset);
+        } finally {
+            WRITE_LOCK.unlock();
+        }
     }
 
     private static void saveInternal(boolean detectPreset, OptimizationPreset activePreset) {
-        load();
+        ensureLoaded();
         config.sanitize();
         if (activePreset != null) {
             config.activePreset = activePreset;
@@ -62,21 +102,38 @@ public final class DisableEntityConfigManager {
         writeConfig(config);
     }
 
-    public static synchronized void resetToDefaults() {
-        config = new DisableEntityConfig();
-        save();
-    }
-
-    public static synchronized String exportConfigToJson() {
-        load();
-        config.sanitize();
-        return GSON.toJson(config);
-    }
-
-    public static synchronized boolean importConfigFromJson(String json) {
-        load();
-
+    public static void resetToDefaults() {
+        WRITE_LOCK.lock();
         try {
+            config = new DisableEntityConfig();
+            saveInternal(true, null);
+        } finally {
+            WRITE_LOCK.unlock();
+        }
+    }
+
+    public static String exportConfigToJson() {
+        READ_LOCK.lock();
+        try {
+            ensureLoadedForRead();
+            config.sanitize();
+            return GSON.toJson(config);
+        } finally {
+            READ_LOCK.unlock();
+        }
+    }
+
+    public static boolean importConfigFromJson(String json) {
+        WRITE_LOCK.lock();
+        try {
+            ensureLoaded();
+
+            if (json == null || json.length() > MAX_IMPORT_SIZE) {
+                DisableEntity.LOGGER.warn("Config import rejected: input is null or exceeds maximum size of {} bytes.",
+                        MAX_IMPORT_SIZE);
+                return false;
+            }
+
             DisableEntityConfig importedConfig = GSON.fromJson(json, DisableEntityConfig.class);
             if (importedConfig == null) {
                 return false;
@@ -84,72 +141,151 @@ public final class DisableEntityConfigManager {
 
             importedConfig.sanitize();
             config = importedConfig;
-            save();
+            saveInternal(true, null);
             return true;
         } catch (JsonParseException exception) {
             DisableEntity.LOGGER.warn("Failed to import config JSON; keeping the current settings.", exception);
             return false;
+        } finally {
+            WRITE_LOCK.unlock();
         }
     }
 
-    public static synchronized void applyPreset(OptimizationPreset preset) {
-        load();
-        if (preset == null) {
-            preset = OptimizationPreset.CUSTOM;
+    public static void applyPreset(OptimizationPreset preset) {
+        WRITE_LOCK.lock();
+        try {
+            ensureLoaded();
+            if (preset == null) {
+                preset = OptimizationPreset.CUSTOM;
+            }
+
+            preset.apply(config);
+            config.activePreset = preset;
+            saveInternal(false, preset);
+        } finally {
+            WRITE_LOCK.unlock();
         }
-
-        preset.apply(config);
-        config.activePreset = preset;
-        saveWithActivePreset(preset);
     }
 
-    public static synchronized boolean toggleGlobalEnabled() {
-        DisableEntityConfig currentConfig = getConfig();
-        currentConfig.globalEnabled = !currentConfig.globalEnabled;
-        save();
-        return currentConfig.globalEnabled;
+    public static boolean toggleGlobalEnabled() {
+        WRITE_LOCK.lock();
+        try {
+            ensureLoaded();
+            config.globalEnabled = !config.globalEnabled;
+            saveInternal(true, null);
+            return config.globalEnabled;
+        } finally {
+            WRITE_LOCK.unlock();
+        }
     }
 
-    public static synchronized boolean toggleEntityRendering() {
-        DisableEntityConfig currentConfig = getConfig();
-        currentConfig.entityRendering.enabled = !currentConfig.entityRendering.enabled;
-        save();
-        return currentConfig.entityRendering.enabled;
+    public static boolean toggleEntityRendering() {
+        WRITE_LOCK.lock();
+        try {
+            ensureLoaded();
+            config.entityRendering.enabled = !config.entityRendering.enabled;
+            saveInternal(true, null);
+            return config.entityRendering.enabled;
+        } finally {
+            WRITE_LOCK.unlock();
+        }
     }
 
-    public static synchronized boolean toggleParticles() {
-        DisableEntityConfig currentConfig = getConfig();
-        currentConfig.particles.enabled = !currentConfig.particles.enabled;
-        save();
-        return currentConfig.particles.enabled;
+    public static boolean toggleParticles() {
+        WRITE_LOCK.lock();
+        try {
+            ensureLoaded();
+            config.particles.enabled = !config.particles.enabled;
+            saveInternal(true, null);
+            return config.particles.enabled;
+        } finally {
+            WRITE_LOCK.unlock();
+        }
     }
 
-    public static synchronized boolean toggleBlockEntities() {
-        DisableEntityConfig currentConfig = getConfig();
-        currentConfig.blockEntities.enabled = !currentConfig.blockEntities.enabled;
-        save();
-        return currentConfig.blockEntities.enabled;
+    public static boolean toggleBlockEntities() {
+        WRITE_LOCK.lock();
+        try {
+            ensureLoaded();
+            config.blockEntities.enabled = !config.blockEntities.enabled;
+            saveInternal(true, null);
+            return config.blockEntities.enabled;
+        } finally {
+            WRITE_LOCK.unlock();
+        }
     }
 
-    public static synchronized boolean toggleNametags() {
-        DisableEntityConfig currentConfig = getConfig();
-        currentConfig.nametags.enabled = !currentConfig.nametags.enabled;
-        save();
-        return currentConfig.nametags.enabled;
+    public static boolean toggleNametags() {
+        WRITE_LOCK.lock();
+        try {
+            ensureLoaded();
+            config.nametags.enabled = !config.nametags.enabled;
+            saveInternal(true, null);
+            return config.nametags.enabled;
+        } finally {
+            WRITE_LOCK.unlock();
+        }
     }
 
-    public static synchronized boolean toggleBlockStates() {
-        DisableEntityConfig currentConfig = getConfig();
-        currentConfig.blockStates.enabled = !currentConfig.blockStates.enabled;
-        save();
-        return currentConfig.blockStates.enabled;
+    public static boolean toggleBlockStates() {
+        WRITE_LOCK.lock();
+        try {
+            ensureLoaded();
+            config.blockStates.enabled = !config.blockStates.enabled;
+            saveInternal(true, null);
+            return config.blockStates.enabled;
+        } finally {
+            WRITE_LOCK.unlock();
+        }
     }
 
-    public static synchronized boolean toggleWorldRendering() {
-        DisableEntityConfig currentConfig = getConfig();
-        currentConfig.worldRendering.enabled = !currentConfig.worldRendering.enabled;
-        save();
-        return currentConfig.worldRendering.enabled;
+    public static boolean toggleWorldRendering() {
+        WRITE_LOCK.lock();
+        try {
+            ensureLoaded();
+            config.worldRendering.enabled = !config.worldRendering.enabled;
+            saveInternal(true, null);
+            return config.worldRendering.enabled;
+        } finally {
+            WRITE_LOCK.unlock();
+        }
+    }
+
+    public static boolean togglePerformanceOverlay() {
+        WRITE_LOCK.lock();
+        try {
+            ensureLoaded();
+            config.showPerformanceOverlay = !config.showPerformanceOverlay;
+            saveInternal(true, null);
+            return config.showPerformanceOverlay;
+        } finally {
+            WRITE_LOCK.unlock();
+        }
+    }
+
+    private static void ensureLoaded() {
+        if (!loaded) {
+            config = readConfig();
+            config.sanitize();
+            loaded = true;
+        }
+    }
+
+    private static void ensureLoadedForRead() {
+        if (!loaded) {
+            READ_LOCK.unlock();
+            WRITE_LOCK.lock();
+            try {
+                if (!loaded) {
+                    config = readConfig();
+                    config.sanitize();
+                    loaded = true;
+                }
+                READ_LOCK.lock();
+            } finally {
+                WRITE_LOCK.unlock();
+            }
+        }
     }
 
     private static DisableEntityConfig readConfig() {

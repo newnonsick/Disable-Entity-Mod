@@ -71,6 +71,7 @@
     "text.disable_entity.option.disable_hand_bob": "Disable view bobbing",
     "text.disable_entity.option.disable_fog": "Disable fog",
     "text.disable_entity.option.disable_overlays": "Disable screen overlays",
+    "text.disable_entity.option.show_performance_overlay": "Show performance overlay",
     "text.disable_entity.option.distance_culling_enabled": "Enable distance culling",
     "text.disable_entity.option.entity_distance_limit_enabled": "Limit entity render distance",
     "text.disable_entity.option.entity_render_distance": "Entity render distance",
@@ -136,6 +137,7 @@
     "text.disable_entity.tooltip.disable_hand_bob": "Stops the camera and hand from bobbing while walking.",
     "text.disable_entity.tooltip.disable_fog": "Removes distance and biome fog.",
     "text.disable_entity.tooltip.disable_overlays": "Removes pumpkin, freezing, and portal overlays.",
+    "text.disable_entity.tooltip.show_performance_overlay": "Shows a small HUD overlay with the number of hidden entities, particles, and other render elements per frame.",
     "text.disable_entity.tooltip.distance_culling_enabled": "Applies a lightweight render-distance limit before rendering work begins.",
     "text.disable_entity.tooltip.entity_distance_limit_enabled": "Uses the entity render-distance slider as an extra early-out.",
     "text.disable_entity.tooltip.entity_render_distance": "Maximum entity render distance in blocks.",
@@ -189,6 +191,7 @@
     "key.disable_entity.toggle_nametags": "Toggle nametag hiding",
     "key.disable_entity.toggle_block_states": "Toggle block state freezing",
     "key.disable_entity.toggle_world_rendering": "Toggle world rendering",
+    "key.disable_entity.toggle_overlay": "Toggle performance overlay",
     "key.disable_entity.reset_defaults": "Reset configuration to defaults",
     "key.disable_entity.copy_config": "Copy configuration to clipboard",
     "key.disable_entity.paste_config": "Paste configuration from clipboard",
@@ -209,5 +212,7 @@
     "message.disable_entity.config_reset": "Disable Entity: configuration reset to defaults",
     "message.disable_entity.config_copied": "Disable Entity: configuration copied to clipboard",
     "message.disable_entity.config_imported": "Disable Entity: configuration imported from clipboard",
-    "message.disable_entity.config_import_failed": "Disable Entity: clipboard did not contain a valid configuration"
+    "message.disable_entity.config_import_failed": "Disable Entity: clipboard did not contain a valid configuration",
+    "message.disable_entity.overlay_enabled": "Disable Entity: performance overlay enabled",
+    "message.disable_entity.overlay_disabled": "Disable Entity: performance overlay disabled"
 }

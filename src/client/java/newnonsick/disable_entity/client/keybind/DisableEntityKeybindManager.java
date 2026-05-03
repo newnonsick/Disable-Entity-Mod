@@ -39,6 +39,9 @@ public final class DisableEntityKeybindManager {
     private static final KeyBinding TOGGLE_WORLD_RENDERING = register(
         "key.disable_entity.toggle_world_rendering"
     );
+    private static final KeyBinding TOGGLE_OVERLAY = register(
+        "key.disable_entity.toggle_overlay"
+    );
     private static final KeyBinding RESET_DEFAULTS = register(
         "key.disable_entity.reset_defaults"
     );
@@ -84,6 +87,7 @@ public final class DisableEntityKeybindManager {
             case "key.disable_entity.toggle_nametags" -> GLFW.GLFW_KEY_PAGE_DOWN;
             case "key.disable_entity.toggle_block_states" -> GLFW.GLFW_KEY_F7;
             case "key.disable_entity.toggle_world_rendering" -> GLFW.GLFW_KEY_F8;
+            case "key.disable_entity.toggle_overlay" -> GLFW.GLFW_KEY_F6;
             case "key.disable_entity.reset_defaults" -> GLFW.GLFW_KEY_DELETE;
             case "key.disable_entity.copy_config" -> GLFW.GLFW_KEY_PRINT_SCREEN;
             case "key.disable_entity.paste_config" -> GLFW.GLFW_KEY_SCROLL_LOCK;
@@ -171,6 +175,15 @@ public final class DisableEntityKeybindManager {
                     : "message.disable_entity.world_rendering_disabled"
             );
         }
+        while (TOGGLE_OVERLAY.wasPressed()) {
+            boolean enabled = DisableEntityConfigManager.togglePerformanceOverlay();
+            announce(
+                client,
+                enabled
+                    ? "message.disable_entity.overlay_enabled"
+                    : "message.disable_entity.overlay_disabled"
+            );
+        }
         while (RESET_DEFAULTS.wasPressed()) {
             DisableEntityConfigManager.resetToDefaults();
             ClientRenderRefresh.refreshAll();
@@ -224,6 +237,5 @@ public final class DisableEntityKeybindManager {
             Text.translatable(translationKey),
             false
         );
-        DisableEntity.LOGGER.info("{}", translationKey);
     }
 }

@@ -1,6 +1,7 @@
 package newnonsick.disable_entity.util;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Queue;
 import java.util.WeakHashMap;
@@ -12,7 +13,8 @@ import net.minecraft.client.particle.Particle;
  * culled on the next tick.
  */
 public final class ParticleVisibilityTracker {
-    private static final Map<Particle, ParticleCategory> CATEGORIES = new WeakHashMap<>();
+    private static final Map<Particle, ParticleCategory> CATEGORIES =
+            Collections.synchronizedMap(new WeakHashMap<>());
 
     private ParticleVisibilityTracker() {
     }
@@ -35,6 +37,7 @@ public final class ParticleVisibilityTracker {
             queue.removeIf(particle -> {
                 if (shouldCull(particle)) {
                     particle.markDead();
+                    PerformanceTracker.getInstance().recordHiddenParticle();
                     return true;
                 }
                 return false;
