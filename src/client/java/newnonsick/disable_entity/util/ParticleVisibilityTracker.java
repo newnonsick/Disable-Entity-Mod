@@ -7,6 +7,7 @@ import java.util.Queue;
 import java.util.WeakHashMap;
 
 import net.minecraft.client.particle.Particle;
+import newnonsick.disable_entity.DisableEntity;
 
 /**
  * Tracks spawned particles by coarse category so hidden categories can be
@@ -28,17 +29,27 @@ public final class ParticleVisibilityTracker {
     }
 
     public static boolean shouldCull(Particle particle) {
+        if (particle == null) {
+            return false;
+        }
         ParticleCategory category = CATEGORIES.get(particle);
-        return category != null && RenderRules.shouldHideParticleCategory(category);
+        if (category == null) {
+            return false;
+        }
+        return RenderRules.shouldHideParticleCategory(category);
     }
 
     public static void purgeHiddenParticles(Collection<? extends Queue<Particle>> queues) {
         for (Queue<Particle> queue : queues) {
             queue.removeIf(particle -> {
-                if (shouldCull(particle)) {
-                    particle.markDead();
-                    PerformanceTracker.getInstance().recordHiddenParticle();
-                    return true;
+                try {
+                    if (shouldCull(particle)) {
+                        particle.markDead();
+                        PerformanceTracker.getInstance().recordHiddenParticle();
+                        return true;
+                    }
+                } catch (Exception e) {
+                    DisableEntity.LOGGER.error("Error culling particle", e);
                 }
                 return false;
             });

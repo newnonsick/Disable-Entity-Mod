@@ -55,7 +55,7 @@ public abstract class ParticleManagerMixin {
             double velocityY, double velocityZ, CallbackInfoReturnable<Particle> cir) {
         try {
             Particle particle = cir.getReturnValue();
-            if (particle != null) {
+            if (particle != null && particle.getType() != null && particle.getType() != ParticleTextureSheet.NO_RENDER) {
                 ParticleVisibilityTracker.register(particle, ParticleCategory.from(parameters));
             }
         } catch (Exception e) {
