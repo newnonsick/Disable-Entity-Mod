@@ -20,7 +20,7 @@ public final class DisableEntityClient implements ClientModInitializer {
         DisableEntityKeybindManager.register();
         registerServerProfileHooks();
         ClientTickEvents.END_CLIENT_TICK.register(client -> FpsSampler.getInstance().onClientTick());
-        ClientTickEvents.END_CLIENT_TICK.register(client -> AdaptiveTuningManager.getInstance().onClientTick(client));
+        ClientTickEvents.END_CLIENT_TICK.register(client -> AdaptiveTuningManager.getInstance().onClientTick());
         DisableEntity.LOGGER.info("Client optimization hooks registered.");
     }
 

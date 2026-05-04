@@ -2,10 +2,6 @@ package newnonsick.disable_entity.client.util;
 
 import net.minecraft.client.MinecraftClient;
 
-/**
- * Rolling FPS sampler that averages the last 60 frames for stable
- * before/after toggle comparisons.
- */
 public final class FpsSampler {
     private static final FpsSampler INSTANCE = new FpsSampler();
     private static final int SAMPLE_COUNT = 60;

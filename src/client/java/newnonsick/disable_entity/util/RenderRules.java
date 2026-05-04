@@ -42,10 +42,6 @@ public final class RenderRules {
         cachedConfig = DisableEntityConfigManager.getConfig();
     }
 
-    public static void clearFrameCache() {
-        cachedConfig = null;
-    }
-
     public static boolean shouldHideEntity(Entity entity, double squaredDistanceToCamera) {
         DisableEntityConfig config = config();
         if (!config.globalEnabled || !config.entityRendering.enabled) {

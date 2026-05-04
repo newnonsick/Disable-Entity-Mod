@@ -2,14 +2,11 @@ package newnonsick.disable_entity.client.util;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
+import newnonsick.disable_entity.DisableEntity;
 import newnonsick.disable_entity.config.DisableEntityConfig;
 import newnonsick.disable_entity.config.DisableEntityConfigManager;
 import newnonsick.disable_entity.config.OptimizationPreset;
 
-/**
- * Monitors FPS and prompts the user to escalate to a higher optimization
- * preset when frame rate stays below a target threshold.
- */
 public final class AdaptiveTuningManager {
     private static final int TICKS_PER_SECOND = 20;
     private static final long PROMPT_DURATION_MS = 10_000L;
@@ -28,12 +25,13 @@ public final class AdaptiveTuningManager {
         return INSTANCE;
     }
 
-    public void onClientTick(MinecraftClient client) {
+    public void onClientTick() {
         DisableEntityConfig config = DisableEntityConfigManager.getConfig();
         if (!config.globalEnabled || !config.adaptiveTuningEnabled) {
             return;
         }
 
+        MinecraftClient client = MinecraftClient.getInstance();
         if (client == null || client.player == null) {
             return;
         }
