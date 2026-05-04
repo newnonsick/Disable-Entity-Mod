@@ -29,8 +29,8 @@ public final class DisableEntityConfigManager {
     private static final ReentrantReadWriteLock.ReadLock READ_LOCK = LOCK.readLock();
     private static final ReentrantReadWriteLock.WriteLock WRITE_LOCK = LOCK.writeLock();
 
-    private static DisableEntityConfig config = new DisableEntityConfig();
-    private static boolean loaded;
+    private static volatile DisableEntityConfig config = new DisableEntityConfig();
+    private static volatile boolean loaded;
 
     private DisableEntityConfigManager() {
     }
@@ -51,26 +51,10 @@ public final class DisableEntityConfigManager {
     }
 
     public static DisableEntityConfig getConfig() {
-        READ_LOCK.lock();
-        try {
-            if (loaded) {
-                return config;
-            }
-        } finally {
-            READ_LOCK.unlock();
+        if (!loaded) {
+            load();
         }
-
-        WRITE_LOCK.lock();
-        try {
-            if (!loaded) {
-                config = readConfig();
-                config.sanitize();
-                loaded = true;
-            }
-            return config;
-        } finally {
-            WRITE_LOCK.unlock();
-        }
+        return config;
     }
 
     public static void save() {
@@ -115,7 +99,6 @@ public final class DisableEntityConfigManager {
     public static String exportConfigToJson() {
         READ_LOCK.lock();
         try {
-            ensureLoadedForRead();
             config.sanitize();
             return GSON.toJson(config);
         } finally {
@@ -268,23 +251,6 @@ public final class DisableEntityConfigManager {
             config = readConfig();
             config.sanitize();
             loaded = true;
-        }
-    }
-
-    private static void ensureLoadedForRead() {
-        if (!loaded) {
-            READ_LOCK.unlock();
-            WRITE_LOCK.lock();
-            try {
-                if (!loaded) {
-                    config = readConfig();
-                    config.sanitize();
-                    loaded = true;
-                }
-                READ_LOCK.lock();
-            } finally {
-                WRITE_LOCK.unlock();
-            }
         }
     }
 
