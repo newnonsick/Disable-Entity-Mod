@@ -18,6 +18,7 @@ public final class DynamicBlockRegistry {
 
     private static final DynamicBlockRegistry INSTANCE =
         new DynamicBlockRegistry();
+    private static final int MAX_FROZEN_CACHE_SIZE = 4096;
 
     private final Map<Block, DynamicBlockFamily> familyCache =
         new ConcurrentHashMap<>();
@@ -47,6 +48,10 @@ public final class DynamicBlockRegistry {
         DynamicBlockFamily family = getFamily(state.getBlock());
         if (family == null) {
             return state;
+        }
+
+        if (frozenStateCache.size() >= MAX_FROZEN_CACHE_SIZE) {
+            return freezeState(state, family);
         }
 
         return frozenStateCache.computeIfAbsent(state, s -> freezeState(s, family));
