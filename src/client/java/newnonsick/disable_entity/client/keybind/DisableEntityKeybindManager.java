@@ -8,6 +8,7 @@ import net.minecraft.client.util.InputUtil;
 import net.minecraft.text.Text;
 import newnonsick.disable_entity.DisableEntity;
 import newnonsick.disable_entity.client.util.ClientRenderRefresh;
+import newnonsick.disable_entity.client.util.FpsSampler;
 import newnonsick.disable_entity.config.DisableEntityConfigManager;
 import org.lwjgl.glfw.GLFW;
 
@@ -53,6 +54,10 @@ public final class DisableEntityKeybindManager {
     );
 
     private static boolean registered;
+
+    private static boolean pendingFpsDelta;
+    private static long fpsDeltaStartTime;
+    private static float fpsDeltaPre;
 
     private DisableEntityKeybindManager() {}
 
@@ -104,9 +109,22 @@ public final class DisableEntityKeybindManager {
             return;
         }
 
+        if (pendingFpsDelta && System.currentTimeMillis() - fpsDeltaStartTime > 2000L) {
+            pendingFpsDelta = false;
+            float post = FpsSampler.getInstance().getAverage();
+            int delta = Math.round(post - fpsDeltaPre);
+            if (DisableEntityConfigManager.getConfig().showFpsDeltaOnToggle) {
+                String key = delta >= 0
+                    ? "message.disable_entity.fps_delta_gain"
+                    : "message.disable_entity.fps_delta_loss";
+                announce(client, Text.translatable(key, Math.abs(delta)));
+            }
+        }
+
         while (TOGGLE_ALL.wasPressed()) {
             boolean enabled = DisableEntityConfigManager.toggleGlobalEnabled();
             ClientRenderRefresh.refreshAll();
+            startFpsDeltaCheck();
             announce(
                 client,
                 enabled
@@ -118,6 +136,7 @@ public final class DisableEntityKeybindManager {
             boolean enabled =
                 DisableEntityConfigManager.toggleEntityRendering();
             ClientRenderRefresh.refreshAll();
+            startFpsDeltaCheck();
             announce(
                 client,
                 enabled
@@ -128,6 +147,7 @@ public final class DisableEntityKeybindManager {
         while (TOGGLE_PARTICLES.wasPressed()) {
             boolean enabled = DisableEntityConfigManager.toggleParticles();
             ClientRenderRefresh.refreshAll();
+            startFpsDeltaCheck();
             announce(
                 client,
                 enabled
@@ -138,6 +158,7 @@ public final class DisableEntityKeybindManager {
         while (TOGGLE_BLOCK_ENTITIES.wasPressed()) {
             boolean enabled = DisableEntityConfigManager.toggleBlockEntities();
             ClientRenderRefresh.refreshAll();
+            startFpsDeltaCheck();
             announce(
                 client,
                 enabled
@@ -148,6 +169,7 @@ public final class DisableEntityKeybindManager {
         while (TOGGLE_NAMETAGS.wasPressed()) {
             boolean enabled = DisableEntityConfigManager.toggleNametags();
             ClientRenderRefresh.refreshAll();
+            startFpsDeltaCheck();
             announce(
                 client,
                 enabled
@@ -158,6 +180,7 @@ public final class DisableEntityKeybindManager {
         while (TOGGLE_BLOCK_STATES.wasPressed()) {
             boolean enabled = DisableEntityConfigManager.toggleBlockStates();
             ClientRenderRefresh.refreshBlockStates(client);
+            startFpsDeltaCheck();
             announce(
                 client,
                 enabled
@@ -168,6 +191,7 @@ public final class DisableEntityKeybindManager {
         while (TOGGLE_WORLD_RENDERING.wasPressed()) {
             boolean enabled = DisableEntityConfigManager.toggleWorldRendering();
             ClientRenderRefresh.refreshAll();
+            startFpsDeltaCheck();
             announce(
                 client,
                 enabled
@@ -177,6 +201,7 @@ public final class DisableEntityKeybindManager {
         }
         while (TOGGLE_OVERLAY.wasPressed()) {
             boolean enabled = DisableEntityConfigManager.togglePerformanceOverlay();
+            startFpsDeltaCheck();
             announce(
                 client,
                 enabled
@@ -187,6 +212,7 @@ public final class DisableEntityKeybindManager {
         while (RESET_DEFAULTS.wasPressed()) {
             DisableEntityConfigManager.resetToDefaults();
             ClientRenderRefresh.refreshAll();
+            startFpsDeltaCheck();
             announce(client, "message.disable_entity.config_reset");
         }
         while (COPY_CONFIG.wasPressed()) {
@@ -229,6 +255,15 @@ public final class DisableEntityKeybindManager {
         );
     }
 
+    private static void startFpsDeltaCheck() {
+        if (!DisableEntityConfigManager.getConfig().showFpsDeltaOnToggle) {
+            return;
+        }
+        pendingFpsDelta = true;
+        fpsDeltaStartTime = System.currentTimeMillis();
+        fpsDeltaPre = FpsSampler.getInstance().getAverage();
+    }
+
     private static void announce(
         MinecraftClient client,
         String translationKey
@@ -237,5 +272,12 @@ public final class DisableEntityKeybindManager {
             Text.translatable(translationKey),
             false
         );
+    }
+
+    private static void announce(
+        MinecraftClient client,
+        Text text
+    ) {
+        client.inGameHud.setOverlayMessage(text, false);
     }
 }

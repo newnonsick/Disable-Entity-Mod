@@ -72,6 +72,7 @@
     "text.disable_entity.option.disable_hand_bob": "Disable view bobbing",
     "text.disable_entity.option.disable_fog": "Disable fog",
     "text.disable_entity.option.disable_overlays": "Disable screen overlays",
+    "text.disable_entity.option.show_fps_delta": "Show FPS delta on toggle",
     "text.disable_entity.option.show_performance_overlay": "Show performance overlay",
     "text.disable_entity.option.distance_culling_enabled": "Enable distance culling",
     "text.disable_entity.option.entity_distance_limit_enabled": "Limit entity render distance",
@@ -138,6 +139,7 @@
     "text.disable_entity.tooltip.disable_hand_bob": "Stops the camera and hand from bobbing while walking.",
     "text.disable_entity.tooltip.disable_fog": "Removes distance and biome fog.",
     "text.disable_entity.tooltip.disable_overlays": "Removes pumpkin, freezing, and portal overlays.",
+    "text.disable_entity.tooltip.show_fps_delta": "After toggling a feature, shows a temporary message estimating the FPS change 2 seconds later.",
     "text.disable_entity.tooltip.show_performance_overlay": "Shows a small HUD overlay with the number of hidden entities, particles, and other render elements per frame.",
     "text.disable_entity.tooltip.distance_culling_enabled": "Applies a lightweight render-distance limit before rendering work begins.",
     "text.disable_entity.tooltip.entity_distance_limit_enabled": "Uses the entity render-distance slider as an extra early-out.",
@@ -220,6 +222,8 @@
     "text.disable_entity.server_profiles.saved_list": "Saved server profiles:",
     "text.disable_entity.option.use_server_profile": "Use custom settings for this server",
     "text.disable_entity.tooltip.use_server_profile": "Saves the current configuration as a profile for this server. The profile will be loaded automatically every time you join.",
+    "message.disable_entity.fps_delta_gain": "Disable Entity: +%s FPS",
+    "message.disable_entity.fps_delta_loss": "Disable Entity: -%s FPS",
     "message.disable_entity.overlay_enabled": "Disable Entity: performance overlay enabled",
     "message.disable_entity.overlay_disabled": "Disable Entity: performance overlay disabled"
 }

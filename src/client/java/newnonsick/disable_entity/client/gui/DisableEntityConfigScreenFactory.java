@@ -103,6 +103,17 @@ public final class DisableEntityConfigScreenFactory {
                 "text.disable_entity.tooltip.disable_entity_shadows"
             )
         );
+        generalCategory.addEntry(
+            booleanEntry(
+                entryBuilder,
+                Text.translatable(
+                    "text.disable_entity.option.show_fps_delta"
+                ),
+                config.showFpsDeltaOnToggle,
+                value -> config.showFpsDeltaOnToggle = value,
+                "text.disable_entity.tooltip.show_fps_delta"
+            )
+        );
 
         ConfigCategory entityCategory = builder.getOrCreateCategory(
             Text.translatable("text.disable_entity.category.entities")
