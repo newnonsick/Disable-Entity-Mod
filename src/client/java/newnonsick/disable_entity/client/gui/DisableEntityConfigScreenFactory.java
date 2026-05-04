@@ -272,6 +272,28 @@ public final class DisableEntityConfigScreenFactory {
                 "text.disable_entity.tooltip.hide_misc_entities"
             )
         );
+        entityCategory.addEntry(
+            booleanEntry(
+                entryBuilder,
+                Text.translatable(
+                    "text.disable_entity.option.never_hide_named"
+                ),
+                config.entityRendering.neverHideNamedEntities,
+                value -> config.entityRendering.neverHideNamedEntities = value,
+                "text.disable_entity.tooltip.never_hide_named"
+            )
+        );
+        entityCategory.addEntry(
+            booleanEntry(
+                entryBuilder,
+                Text.translatable(
+                    "text.disable_entity.option.never_hide_tamed"
+                ),
+                config.entityRendering.neverHideTamedEntities,
+                value -> config.entityRendering.neverHideTamedEntities = value,
+                "text.disable_entity.tooltip.never_hide_tamed"
+            )
+        );
 
         ConfigCategory nametagCategory = builder.getOrCreateCategory(
             Text.translatable("text.disable_entity.category.nametags")

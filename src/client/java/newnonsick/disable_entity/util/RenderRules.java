@@ -12,6 +12,7 @@ import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.entity.mob.AmbientEntity;
 import net.minecraft.entity.mob.HostileEntity;
 import net.minecraft.entity.passive.PassiveEntity;
+import net.minecraft.entity.passive.TameableEntity;
 import net.minecraft.entity.projectile.FireworkRocketEntity;
 import net.minecraft.entity.projectile.FishingBobberEntity;
 import net.minecraft.entity.projectile.ProjectileEntity;
@@ -59,6 +60,14 @@ public final class RenderRules {
         if (CompatibilityDecisions.shouldUseEntityDistanceCulling(config)
                 && isBeyondDistanceLimit(squaredDistanceToCamera, config.distanceCulling.entityRenderDistance)) {
             return true;
+        }
+
+        if (config.entityRendering.neverHideNamedEntities && entity.hasCustomName()) {
+            return false;
+        }
+        if (config.entityRendering.neverHideTamedEntities && entity instanceof TameableEntity tameable
+                && tameable.isTamed()) {
+            return false;
         }
 
         if (entity instanceof ArmorStandEntity) {

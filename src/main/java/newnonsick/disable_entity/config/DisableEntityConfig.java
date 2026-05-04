@@ -83,6 +83,8 @@ public final class DisableEntityConfig {
         public boolean hideDisplayEntities = true;
         public boolean hideVehicles = true;
         public boolean hideMiscellaneousEntities = true;
+        public boolean neverHideNamedEntities = false;
+        public boolean neverHideTamedEntities = false;
     }
 
     public static final class NametagRendering {
