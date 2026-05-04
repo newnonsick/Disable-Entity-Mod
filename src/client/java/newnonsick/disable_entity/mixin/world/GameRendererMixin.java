@@ -30,6 +30,7 @@ public abstract class GameRendererMixin {
     @Inject(method = "render", at = @At("HEAD"))
     private void onFrameStart(CallbackInfo ci) {
         try {
+            RenderRules.cacheConfigForFrame();
             PerformanceTracker.getInstance().onFrameEnd();
         } catch (Exception e) {
             DisableEntity.LOGGER.error("Error in frame start tracking", e);
