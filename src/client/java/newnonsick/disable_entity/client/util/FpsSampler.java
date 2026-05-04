@@ -22,7 +22,11 @@ public final class FpsSampler {
         if (client == null) {
             return;
         }
-        samples[index] = client.getCurrentFps();
+        recordSample(client.getCurrentFps());
+    }
+
+    void recordSample(float fps) {
+        samples[index] = fps;
         index = (index + 1) % SAMPLE_COUNT;
         if (count < SAMPLE_COUNT) {
             count++;
