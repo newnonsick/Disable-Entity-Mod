@@ -7,7 +7,6 @@ import newnonsick.disable_entity.DisableEntity;
 import newnonsick.disable_entity.util.PerformanceTracker;
 import newnonsick.disable_entity.util.RenderRules;
 import newnonsick.disable_entity.config.DisableEntityConfig;
-import newnonsick.disable_entity.config.DisableEntityConfigManager;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import org.spongepowered.asm.mixin.Mixin;
@@ -73,7 +72,7 @@ public abstract class InGameHudMixin {
     @Inject(method = "render", at = @At("TAIL"))
     private void renderPerformanceOverlay(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
         try {
-            DisableEntityConfig config = DisableEntityConfigManager.getConfig();
+            DisableEntityConfig config = RenderRules.config();
             if (!config.globalEnabled || !config.showPerformanceOverlay) {
                 return;
             }
