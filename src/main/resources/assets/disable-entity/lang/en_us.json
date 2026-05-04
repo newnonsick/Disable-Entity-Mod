@@ -220,6 +220,7 @@
     "message.disable_entity.config_reset": "Disable Entity: configuration reset to defaults",
     "message.disable_entity.config_copied": "Disable Entity: configuration copied to clipboard",
     "message.disable_entity.config_imported": "Disable Entity: configuration imported from clipboard",
+    "message.disable_entity.config_corrupted": "Disable Entity: config was reset due to corruption (backup saved)",
     "message.disable_entity.config_import_failed": "Disable Entity: clipboard did not contain a valid configuration",
     "text.disable_entity.server_profiles.current": "Current server: %s",
     "text.disable_entity.server_profiles.no_server": "Join a multiplayer server to configure per-server settings.",

@@ -37,6 +37,7 @@ public final class DisableEntityConfigManager {
 
     private static volatile DisableEntityConfig config = new DisableEntityConfig();
     private static volatile boolean loaded;
+    private static volatile boolean configWasCorrupted;
 
     private static final Path PROFILES_PATH = FabricLoader.getInstance().getConfigDir().resolve("disable-entity-profiles.json");
     private static final Map<String, DisableEntityConfig> serverProfiles = new HashMap<>();
@@ -304,6 +305,14 @@ public final class DisableEntityConfigManager {
         }
     }
 
+    public static boolean wasConfigCorrupted() {
+        return configWasCorrupted;
+    }
+
+    public static void clearConfigCorruptedFlag() {
+        configWasCorrupted = false;
+    }
+
     public static boolean hasServerProfile(String address) {
         READ_LOCK.lock();
         try {
@@ -373,6 +382,7 @@ public final class DisableEntityConfigManager {
             return parsed == null ? new DisableEntityConfig() : parsed;
         } catch (JsonParseException | IOException exception) {
             backupCorruptConfig();
+            configWasCorrupted = true;
             DisableEntity.LOGGER.error("Failed to read config file {}, using defaults.", CONFIG_PATH, exception);
             return new DisableEntityConfig();
         }

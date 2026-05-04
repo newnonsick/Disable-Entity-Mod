@@ -3,10 +3,12 @@ package newnonsick.disable_entity.mixin.world;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.InGameHud;
 import net.minecraft.client.render.RenderTickCounter;
+import net.minecraft.text.Text;
 import newnonsick.disable_entity.DisableEntity;
 import newnonsick.disable_entity.util.PerformanceTracker;
 import newnonsick.disable_entity.util.RenderRules;
 import newnonsick.disable_entity.config.DisableEntityConfig;
+import newnonsick.disable_entity.config.DisableEntityConfigManager;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import org.spongepowered.asm.mixin.Mixin;
@@ -68,6 +70,24 @@ public abstract class InGameHudMixin {
 
     @org.spongepowered.asm.mixin.Unique
     private int disableEntity$maxValueWidth = 30; // Minimum width for values
+
+    @Inject(method = "render", at = @At("TAIL"))
+    private void renderCorruptionNotice(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
+        try {
+            if (DisableEntityConfigManager.wasConfigCorrupted()) {
+                MinecraftClient client = MinecraftClient.getInstance();
+                if (client != null && client.player != null) {
+                    client.inGameHud.setOverlayMessage(
+                        Text.translatable("message.disable_entity.config_corrupted"),
+                        false
+                    );
+                    DisableEntityConfigManager.clearConfigCorruptedFlag();
+                }
+            }
+        } catch (Exception e) {
+            DisableEntity.LOGGER.error("Error rendering corruption notice", e);
+        }
+    }
 
     @Inject(method = "render", at = @At("TAIL"))
     private void renderPerformanceOverlay(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
