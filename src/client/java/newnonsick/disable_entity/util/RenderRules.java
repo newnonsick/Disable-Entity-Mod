@@ -18,8 +18,6 @@ import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.entity.vehicle.AbstractMinecartEntity;
 import net.minecraft.entity.vehicle.BoatEntity;
 import net.minecraft.particle.ParticleEffect;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.Identifier;
 import newnonsick.disable_entity.compat.CompatibilityDecisions;
 import newnonsick.disable_entity.config.DisableEntityConfig;
 import newnonsick.disable_entity.config.DisableEntityConfigManager;
@@ -305,201 +303,87 @@ public final class RenderRules {
     }
 
     private static boolean isVehicleEntity(Entity entity) {
-        if (entity instanceof BoatEntity || entity instanceof AbstractMinecartEntity) {
-            return true;
-        }
-
-        Identifier identifier = getEntityIdentifier(entity);
-        return identifier != null && containsAny(identifier.getPath(), "boat", "minecart", "cart", "vehicle", "raft",
-                "barge");
+        return entity instanceof BoatEntity || entity instanceof AbstractMinecartEntity;
     }
 
     private static boolean isProjectileEntity(Entity entity) {
-        if (entity instanceof ProjectileEntity || entity instanceof FishingBobberEntity
-                || entity instanceof FireworkRocketEntity) {
-            return true;
-        }
-
-        Identifier identifier = getEntityIdentifier(entity);
-        return identifier != null && containsAny(identifier.getPath(), "projectile", "arrow", "bolt", "trident",
-                "fireball", "snowball", "egg", "pearl", "dart", "shuriken", "bullet");
+        return entity instanceof ProjectileEntity || entity instanceof FishingBobberEntity
+                || entity instanceof FireworkRocketEntity;
     }
 
     private static boolean isItemEntity(Entity entity) {
-        if (entity instanceof net.minecraft.entity.ItemEntity) {
-            return true;
-        }
-
-        Identifier identifier = getEntityIdentifier(entity);
-        return identifier != null && containsAny(identifier.getPath(), "item", "drop", "orb", "pickup");
+        return entity instanceof net.minecraft.entity.ItemEntity;
     }
 
     private static boolean isHostileEntity(Entity entity) {
-        if (entity instanceof HostileEntity || entity.getType().getSpawnGroup() == SpawnGroup.MONSTER) {
-            return true;
-        }
-
-        Identifier identifier = getEntityIdentifier(entity);
-        return identifier != null && containsAny(identifier.getPath(), "zombie", "skeleton", "creeper", "spider",
-                "witch", "enderman", "blaze", "ghast", "drowned", "slime", "magma", "guardian",
-                "illager", "pillager", "raider", "wraith", "demon", "hostile", "monster");
+        return entity instanceof HostileEntity || entity.getType().getSpawnGroup() == SpawnGroup.MONSTER;
     }
 
     private static boolean isPassiveEntity(Entity entity) {
         SpawnGroup spawnGroup = entity.getType().getSpawnGroup();
-        if (entity instanceof PassiveEntity || entity instanceof AmbientEntity || spawnGroup == SpawnGroup.CREATURE
+        return entity instanceof PassiveEntity || entity instanceof AmbientEntity || spawnGroup == SpawnGroup.CREATURE
                 || spawnGroup == SpawnGroup.AMBIENT || spawnGroup == SpawnGroup.WATER_CREATURE
                 || spawnGroup == SpawnGroup.WATER_AMBIENT || spawnGroup == SpawnGroup.AXOLOTLS
-                || spawnGroup == SpawnGroup.UNDERGROUND_WATER_CREATURE) {
-            return true;
-        }
-
-        Identifier identifier = getEntityIdentifier(entity);
-        return identifier != null && containsAny(identifier.getPath(), "cow", "pig", "sheep", "chicken",
-                "horse", "animal", "passive", "friendly", "fish", "turtle", "axolotl", "goat",
-                "villager", "frog", "cat", "wolf", "fox", "bat");
+                || spawnGroup == SpawnGroup.UNDERGROUND_WATER_CREATURE;
     }
 
     private static boolean isExperienceOrbEntity(Entity entity) {
-        if (entity.getType() == EntityType.EXPERIENCE_ORB) {
-            return true;
-        }
-
-        Identifier identifier = getEntityIdentifier(entity);
-        return identifier != null && containsAny(identifier.getPath(), "experience_orb");
+        return entity.getType() == EntityType.EXPERIENCE_ORB;
     }
 
     private static boolean isItemFrameEntity(Entity entity) {
-        if (entity.getType() == EntityType.ITEM_FRAME || entity.getType() == EntityType.GLOW_ITEM_FRAME) {
-            return true;
-        }
-
-        Identifier identifier = getEntityIdentifier(entity);
-        return identifier != null && containsAny(identifier.getPath(), "item_frame");
+        return entity.getType() == EntityType.ITEM_FRAME || entity.getType() == EntityType.GLOW_ITEM_FRAME;
     }
 
     private static boolean isPaintingEntity(Entity entity) {
-        if (entity.getType() == EntityType.PAINTING) {
-            return true;
-        }
-
-        Identifier identifier = getEntityIdentifier(entity);
-        return identifier != null && containsAny(identifier.getPath(), "painting");
+        return entity.getType() == EntityType.PAINTING;
     }
 
     private static boolean isLeashKnotEntity(Entity entity) {
-        if (entity.getType() == EntityType.LEASH_KNOT) {
-            return true;
-        }
-
-        Identifier identifier = getEntityIdentifier(entity);
-        return identifier != null && containsAny(identifier.getPath(), "leash_knot");
+        return entity.getType() == EntityType.LEASH_KNOT;
     }
 
     private static boolean isDisplayEntity(Entity entity) {
-        if (entity.getType() == EntityType.BLOCK_DISPLAY
+        return entity.getType() == EntityType.BLOCK_DISPLAY
                 || entity.getType() == EntityType.ITEM_DISPLAY
-                || entity.getType() == EntityType.TEXT_DISPLAY) {
-            return true;
-        }
-
-        Identifier identifier = getEntityIdentifier(entity);
-        return identifier != null && containsAny(identifier.getPath(), "block_display", "item_display",
-                "text_display");
+                || entity.getType() == EntityType.TEXT_DISPLAY;
     }
 
     private static boolean isChestLike(BlockEntity blockEntity) {
         BlockEntityType<?> type = blockEntity.getType();
-        if (type == BlockEntityType.CHEST || type == BlockEntityType.TRAPPED_CHEST
+        return type == BlockEntityType.CHEST || type == BlockEntityType.TRAPPED_CHEST
                 || type == BlockEntityType.ENDER_CHEST
-                || type == BlockEntityType.BARREL) {
-            return true;
-        }
-
-        Identifier identifier = getBlockEntityIdentifier(blockEntity);
-        return identifier != null && containsAny(identifier.getPath(), "chest", "barrel", "crate", "storage");
+                || type == BlockEntityType.BARREL;
     }
 
     private static boolean isSignLike(BlockEntity blockEntity) {
         BlockEntityType<?> type = blockEntity.getType();
-        if (type == BlockEntityType.SIGN || type == BlockEntityType.HANGING_SIGN) {
-            return true;
-        }
-
-        Identifier identifier = getBlockEntityIdentifier(blockEntity);
-        return identifier != null && containsAny(identifier.getPath(), "sign", "notice", "board");
+        return type == BlockEntityType.SIGN || type == BlockEntityType.HANGING_SIGN;
     }
 
     private static boolean isBeaconLike(BlockEntity blockEntity) {
-        if (blockEntity.getType() == BlockEntityType.BEACON) {
-            return true;
-        }
-
-        Identifier identifier = getBlockEntityIdentifier(blockEntity);
-        return identifier != null && containsAny(identifier.getPath(), "beacon", "beam");
+        return blockEntity.getType() == BlockEntityType.BEACON;
     }
 
     private static boolean isSpawnerLike(BlockEntity blockEntity) {
-        if (blockEntity.getType() == BlockEntityType.MOB_SPAWNER) {
-            return true;
-        }
-
-        Identifier identifier = getBlockEntityIdentifier(blockEntity);
-        return identifier != null && containsAny(identifier.getPath(), "spawner", "generator");
+        return blockEntity.getType() == BlockEntityType.MOB_SPAWNER;
     }
 
     private static boolean isShulkerLike(BlockEntity blockEntity) {
-        if (blockEntity.getType() == BlockEntityType.SHULKER_BOX) {
-            return true;
-        }
-
-        Identifier identifier = getBlockEntityIdentifier(blockEntity);
-        return identifier != null && containsAny(identifier.getPath(), "shulker");
+        return blockEntity.getType() == BlockEntityType.SHULKER_BOX;
     }
 
     private static boolean isBannerLike(BlockEntity blockEntity) {
-        if (blockEntity.getType() == BlockEntityType.BANNER) {
-            return true;
-        }
-
-        Identifier identifier = getBlockEntityIdentifier(blockEntity);
-        return identifier != null && containsAny(identifier.getPath(), "banner", "flag");
+        return blockEntity.getType() == BlockEntityType.BANNER;
     }
 
     private static boolean isFurnaceLike(BlockEntity blockEntity) {
         BlockEntityType<?> type = blockEntity.getType();
-        if (type == BlockEntityType.FURNACE || type == BlockEntityType.BLAST_FURNACE
-                || type == BlockEntityType.SMOKER) {
-            return true;
-        }
-
-        Identifier identifier = getBlockEntityIdentifier(blockEntity);
-        return identifier != null && containsAny(identifier.getPath(), "furnace", "smoker", "kiln");
+        return type == BlockEntityType.FURNACE || type == BlockEntityType.BLAST_FURNACE
+                || type == BlockEntityType.SMOKER;
     }
 
     private static boolean isEnchantingTableLike(BlockEntity blockEntity) {
-        if (blockEntity.getType() == BlockEntityType.ENCHANTING_TABLE) {
-            return true;
-        }
-
-        Identifier identifier = getBlockEntityIdentifier(blockEntity);
-        return identifier != null && containsAny(identifier.getPath(), "enchant", "altar");
-    }
-
-    private static Identifier getEntityIdentifier(Entity entity) {
-        return Registries.ENTITY_TYPE.getId(entity.getType());
-    }
-
-    private static Identifier getBlockEntityIdentifier(BlockEntity blockEntity) {
-        return Registries.BLOCK_ENTITY_TYPE.getId(blockEntity.getType());
-    }
-
-    private static boolean containsAny(String path, String... fragments) {
-        for (String fragment : fragments) {
-            if (path.contains(fragment)) {
-                return true;
-            }
-        }
-        return false;
+        return blockEntity.getType() == BlockEntityType.ENCHANTING_TABLE;
     }
 }
