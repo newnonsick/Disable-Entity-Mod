@@ -41,18 +41,17 @@ public final class ParticleVisibilityTracker {
 
     public static void purgeHiddenParticles(Collection<? extends Queue<Particle>> queues) {
         for (Queue<Particle> queue : queues) {
-            queue.removeIf(particle -> {
+            Particle[] snapshot = queue.toArray(new Particle[0]);
+            for (Particle particle : snapshot) {
                 try {
                     if (shouldCull(particle)) {
                         particle.markDead();
                         PerformanceTracker.getInstance().recordHiddenParticle();
-                        return true;
                     }
                 } catch (Exception e) {
                     DisableEntity.LOGGER.error("Error culling particle", e);
                 }
-                return false;
-            });
+            }
         }
     }
 }
