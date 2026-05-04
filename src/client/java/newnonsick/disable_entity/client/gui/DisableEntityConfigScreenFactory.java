@@ -1,10 +1,12 @@
 package newnonsick.disable_entity.client.gui;
 
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
 import newnonsick.disable_entity.client.util.ClientRenderRefresh;
@@ -859,6 +861,16 @@ public final class DisableEntityConfigScreenFactory {
                 .build()
         );
 
+        ConfigCategory profileCategory = builder.getOrCreateCategory(
+            Text.translatable("text.disable_entity.category.server_profiles")
+        );
+        addDescription(
+            profileCategory,
+            entryBuilder,
+            "text.disable_entity.section.server_profiles.description"
+        );
+        buildServerProfileSection(profileCategory, entryBuilder);
+
         ConfigCategory hotkeyCategory = builder.getOrCreateCategory(
             Text.translatable("text.disable_entity.category.hotkeys")
         );
@@ -1098,6 +1110,81 @@ public final class DisableEntityConfigScreenFactory {
             config.blockStates.freezeBells +
             ":" +
             config.blockStates.freezeOtherDynamic;
+    }
+
+    private static void buildServerProfileSection(
+        ConfigCategory category,
+        ConfigEntryBuilder entryBuilder
+    ) {
+        MinecraftClient client = MinecraftClient.getInstance();
+        String currentAddress = null;
+        if (client != null && client.getCurrentServerEntry() != null) {
+            currentAddress = client.getCurrentServerEntry().address;
+        }
+
+        if (currentAddress != null) {
+            String address = currentAddress;
+            boolean hasProfile = DisableEntityConfigManager.hasServerProfile(address);
+
+            category.addEntry(
+                entryBuilder
+                    .startTextDescription(
+                        Text.translatable(
+                            "text.disable_entity.server_profiles.current",
+                            address
+                        )
+                    )
+                    .build()
+            );
+
+            category.addEntry(
+                booleanEntry(
+                    entryBuilder,
+                    Text.translatable(
+                        "text.disable_entity.option.use_server_profile"
+                    ),
+                    hasProfile,
+                    value -> {
+                        if (value) {
+                            DisableEntityConfigManager.saveCurrentAsServerProfile(address);
+                        } else {
+                            DisableEntityConfigManager.deleteServerProfile(address);
+                        }
+                    },
+                    "text.disable_entity.tooltip.use_server_profile"
+                )
+            );
+        } else {
+            category.addEntry(
+                entryBuilder
+                    .startTextDescription(
+                        Text.translatable(
+                            "text.disable_entity.server_profiles.no_server"
+                        )
+                    )
+                    .build()
+            );
+        }
+
+        Set<String> keys = DisableEntityConfigManager.getServerProfileKeys();
+        if (!keys.isEmpty()) {
+            category.addEntry(
+                entryBuilder
+                    .startTextDescription(
+                        Text.translatable(
+                            "text.disable_entity.server_profiles.saved_list"
+                        )
+                    )
+                    .build()
+            );
+            for (String key : keys) {
+                category.addEntry(
+                    entryBuilder
+                        .startTextDescription(Text.literal("  \u2022 " + key))
+                        .build()
+                );
+            }
+        }
     }
 
     private static me.shedaniel.clothconfig2.api.AbstractConfigListEntry<

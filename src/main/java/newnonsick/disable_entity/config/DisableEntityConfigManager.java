@@ -3,15 +3,21 @@ package newnonsick.disable_entity.config;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
+import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
+import com.google.gson.reflect.TypeToken;
 import net.fabricmc.loader.api.FabricLoader;
 import newnonsick.disable_entity.DisableEntity;
 
@@ -32,6 +38,10 @@ public final class DisableEntityConfigManager {
     private static volatile DisableEntityConfig config = new DisableEntityConfig();
     private static volatile boolean loaded;
 
+    private static final Path PROFILES_PATH = FabricLoader.getInstance().getConfigDir().resolve("disable-entity-profiles.json");
+    private static final Map<String, DisableEntityConfig> serverProfiles = new HashMap<>();
+    private static volatile String activeServerAddress;
+
     private DisableEntityConfigManager() {
     }
 
@@ -44,6 +54,7 @@ public final class DisableEntityConfigManager {
 
             config = readConfig();
             config.sanitize();
+            serverProfiles.putAll(readProfiles());
             loaded = true;
         } finally {
             WRITE_LOCK.unlock();
@@ -53,6 +64,14 @@ public final class DisableEntityConfigManager {
     public static DisableEntityConfig getConfig() {
         if (!loaded) {
             load();
+        }
+
+        String address = activeServerAddress;
+        if (address != null) {
+            DisableEntityConfig profile = serverProfiles.get(address);
+            if (profile != null) {
+                return profile;
+            }
         }
         return config;
     }
@@ -77,20 +96,32 @@ public final class DisableEntityConfigManager {
 
     private static void saveInternal(boolean detectPreset, OptimizationPreset activePreset) {
         ensureLoaded();
-        config.sanitize();
+        DisableEntityConfig target = getConfig();
+        target.sanitize();
         if (activePreset != null) {
-            config.activePreset = activePreset;
+            target.activePreset = activePreset;
         } else if (detectPreset) {
-            config.activePreset = OptimizationPreset.detect(config);
+            target.activePreset = OptimizationPreset.detect(target);
         }
-        writeConfig(config);
+
+        if (activeServerAddress != null && serverProfiles.containsKey(activeServerAddress)) {
+            writeProfiles();
+        } else {
+            writeConfig(config);
+        }
     }
 
     public static void resetToDefaults() {
         WRITE_LOCK.lock();
         try {
-            config = new DisableEntityConfig();
-            saveInternal(true, null);
+            DisableEntityConfig fresh = new DisableEntityConfig();
+            if (activeServerAddress != null && serverProfiles.containsKey(activeServerAddress)) {
+                serverProfiles.put(activeServerAddress, fresh);
+                writeProfiles();
+            } else {
+                config = fresh;
+                writeConfig(config);
+            }
         } finally {
             WRITE_LOCK.unlock();
         }
@@ -99,8 +130,9 @@ public final class DisableEntityConfigManager {
     public static String exportConfigToJson() {
         READ_LOCK.lock();
         try {
-            config.sanitize();
-            return GSON.toJson(config);
+            DisableEntityConfig target = getConfig();
+            target.sanitize();
+            return GSON.toJson(target);
         } finally {
             READ_LOCK.unlock();
         }
@@ -123,8 +155,13 @@ public final class DisableEntityConfigManager {
             }
 
             importedConfig.sanitize();
-            config = importedConfig;
-            saveInternal(true, null);
+            if (activeServerAddress != null) {
+                serverProfiles.put(activeServerAddress, importedConfig);
+                writeProfiles();
+            } else {
+                config = importedConfig;
+                saveInternal(true, null);
+            }
             return true;
         } catch (JsonParseException exception) {
             DisableEntity.LOGGER.warn("Failed to import config JSON; keeping the current settings.", exception);
@@ -238,9 +275,79 @@ public final class DisableEntityConfigManager {
         WRITE_LOCK.lock();
         try {
             ensureLoaded();
-            config.showPerformanceOverlay = !config.showPerformanceOverlay;
+            DisableEntityConfig target = getConfig();
+            target.showPerformanceOverlay = !target.showPerformanceOverlay;
             saveInternal(true, null);
-            return config.showPerformanceOverlay;
+            return target.showPerformanceOverlay;
+        } finally {
+            WRITE_LOCK.unlock();
+        }
+    }
+
+    public static void activateServerProfile(String address) {
+        WRITE_LOCK.lock();
+        try {
+            ensureLoaded();
+            activeServerAddress = address;
+            DisableEntity.LOGGER.info("Activated server profile for {}", address);
+        } finally {
+            WRITE_LOCK.unlock();
+        }
+    }
+
+    public static void deactivateServerProfile() {
+        WRITE_LOCK.lock();
+        try {
+            activeServerAddress = null;
+        } finally {
+            WRITE_LOCK.unlock();
+        }
+    }
+
+    public static boolean hasServerProfile(String address) {
+        READ_LOCK.lock();
+        try {
+            return serverProfiles.containsKey(address);
+        } finally {
+            READ_LOCK.unlock();
+        }
+    }
+
+    public static String getActiveServerAddress() {
+        return activeServerAddress;
+    }
+
+    public static Set<String> getServerProfileKeys() {
+        READ_LOCK.lock();
+        try {
+            return Set.copyOf(serverProfiles.keySet());
+        } finally {
+            READ_LOCK.unlock();
+        }
+    }
+
+    public static void saveCurrentAsServerProfile(String address) {
+        WRITE_LOCK.lock();
+        try {
+            ensureLoaded();
+            DisableEntityConfig current = getConfig();
+            String json = GSON.toJson(current);
+            DisableEntityConfig copy = GSON.fromJson(json, DisableEntityConfig.class);
+            if (copy != null) {
+                copy.sanitize();
+                serverProfiles.put(address, copy);
+                writeProfiles();
+            }
+        } finally {
+            WRITE_LOCK.unlock();
+        }
+    }
+
+    public static void deleteServerProfile(String address) {
+        WRITE_LOCK.lock();
+        try {
+            serverProfiles.remove(address);
+            writeProfiles();
         } finally {
             WRITE_LOCK.unlock();
         }
@@ -303,6 +410,51 @@ public final class DisableEntityConfigManager {
             }
         } catch (IOException exception) {
             DisableEntity.LOGGER.error("Failed to write config file {}.", CONFIG_PATH, exception);
+        }
+    }
+
+    private static Map<String, DisableEntityConfig> readProfiles() {
+        if (!Files.exists(PROFILES_PATH)) {
+            return new HashMap<>();
+        }
+
+        try (Reader reader = Files.newBufferedReader(PROFILES_PATH)) {
+            Type type = new TypeToken<Map<String, DisableEntityConfig>>() {
+            }.getType();
+            Map<String, DisableEntityConfig> parsed = GSON.fromJson(reader, type);
+            if (parsed != null) {
+                for (DisableEntityConfig profile : parsed.values()) {
+                    profile.sanitize();
+                }
+                return parsed;
+            }
+        } catch (JsonParseException | IOException exception) {
+            DisableEntity.LOGGER.error("Failed to read profiles file {}, using empty map.", PROFILES_PATH, exception);
+        }
+        return new HashMap<>();
+    }
+
+    private static void writeProfiles() {
+        try {
+            Path parent = PROFILES_PATH.getParent();
+            if (parent != null) {
+                Files.createDirectories(parent);
+            }
+
+            Path temporaryPath = PROFILES_PATH.resolveSibling(PROFILES_PATH.getFileName() + TEMP_FILE_SUFFIX);
+            try (Writer writer = Files.newBufferedWriter(temporaryPath, StandardOpenOption.CREATE,
+                    StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)) {
+                GSON.toJson(serverProfiles, writer);
+            }
+
+            try {
+                Files.move(temporaryPath, PROFILES_PATH, StandardCopyOption.REPLACE_EXISTING,
+                        StandardCopyOption.ATOMIC_MOVE);
+            } catch (IOException moveException) {
+                Files.move(temporaryPath, PROFILES_PATH, StandardCopyOption.REPLACE_EXISTING);
+            }
+        } catch (IOException exception) {
+            DisableEntity.LOGGER.error("Failed to write profiles file {}.", PROFILES_PATH, exception);
         }
     }
 }

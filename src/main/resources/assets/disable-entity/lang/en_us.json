@@ -9,6 +9,7 @@
     "text.disable_entity.category.world_rendering": "World Rendering",
     "text.disable_entity.category.distance_culling": "Distance Culling",
     "text.disable_entity.category.hotkeys": "Hotkeys",
+    "text.disable_entity.category.server_profiles": "Server Profiles",
     "text.disable_entity.category.compatibility": "Compatibility",
     "text.disable_entity.option.preset": "Optimization preset",
     "text.disable_entity.option.global_enabled": "Enable all optimizations",
@@ -153,6 +154,7 @@
     "text.disable_entity.section.world_rendering.description": "Disables expensive environmental and camera effects.",
     "text.disable_entity.section.distance_culling.description": "Uses early distance limits to skip far-away rendering work.",
     "text.disable_entity.section.hotkeys.description": "Bind fast runtime toggles in Controls. They apply immediately in game.",
+    "text.disable_entity.section.server_profiles.description": "Automatically switch settings when joining known multiplayer servers.",
     "text.disable_entity.section.compatibility.description": "Informational status only. The mod stays on conservative dispatcher-level hooks and steps aside from overlapping culling mods.",
     "text.disable_entity.hotkeys.description": "Default keys are Insert, Home, End, Page Up, Page Down, Delete, Print Screen, and Scroll Lock. Rebind them in Controls; runtime toggles show an overlay message immediately.",
     "text.disable_entity.preset.custom": "Custom",
@@ -213,6 +215,11 @@
     "message.disable_entity.config_copied": "Disable Entity: configuration copied to clipboard",
     "message.disable_entity.config_imported": "Disable Entity: configuration imported from clipboard",
     "message.disable_entity.config_import_failed": "Disable Entity: clipboard did not contain a valid configuration",
+    "text.disable_entity.server_profiles.current": "Current server: %s",
+    "text.disable_entity.server_profiles.no_server": "Join a multiplayer server to configure per-server settings.",
+    "text.disable_entity.server_profiles.saved_list": "Saved server profiles:",
+    "text.disable_entity.option.use_server_profile": "Use custom settings for this server",
+    "text.disable_entity.tooltip.use_server_profile": "Saves the current configuration as a profile for this server. The profile will be loaded automatically every time you join.",
     "message.disable_entity.overlay_enabled": "Disable Entity: performance overlay enabled",
     "message.disable_entity.overlay_disabled": "Disable Entity: performance overlay disabled"
 }
