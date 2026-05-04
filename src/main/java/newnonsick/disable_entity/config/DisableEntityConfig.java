@@ -29,6 +29,9 @@ public final class DisableEntityConfig {
     public DistanceCulling distanceCulling = new DistanceCulling();
     public boolean showPerformanceOverlay = false;
     public boolean showFpsDeltaOnToggle = false;
+    public boolean adaptiveTuningEnabled = false;
+    public int adaptiveTargetFps = 30;
+    public int adaptiveEscalationDelaySeconds = 5;
 
     public void sanitize() {
         if (configVersion <= 0 || configVersion < CURRENT_CONFIG_VERSION) {
@@ -66,6 +69,8 @@ public final class DisableEntityConfig {
                 MIN_RENDER_DISTANCE, MAX_ENTITY_RENDER_DISTANCE);
         distanceCulling.blockEntityRenderDistance = MathHelper.clamp(distanceCulling.blockEntityRenderDistance,
                 MIN_RENDER_DISTANCE, MAX_BLOCK_ENTITY_RENDER_DISTANCE);
+        adaptiveTargetFps = MathHelper.clamp(adaptiveTargetFps, 1, 240);
+        adaptiveEscalationDelaySeconds = MathHelper.clamp(adaptiveEscalationDelaySeconds, 1, 60);
     }
 
     public static final class EntityRendering {

@@ -114,6 +114,61 @@ public final class DisableEntityConfigScreenFactory {
                 "text.disable_entity.tooltip.show_fps_delta"
             )
         );
+        generalCategory.addEntry(
+            booleanEntry(
+                entryBuilder,
+                Text.translatable(
+                    "text.disable_entity.option.adaptive_tuning"
+                ),
+                config.adaptiveTuningEnabled,
+                value -> config.adaptiveTuningEnabled = value,
+                "text.disable_entity.tooltip.adaptive_tuning"
+            )
+        );
+        generalCategory.addEntry(
+            entryBuilder
+                .startIntSlider(
+                    Text.translatable(
+                        "text.disable_entity.option.adaptive_target_fps"
+                    ),
+                    config.adaptiveTargetFps,
+                    1,
+                    240
+                )
+                .setDefaultValue(30)
+                .setSaveConsumer(value -> config.adaptiveTargetFps = value)
+                .setTextGetter(value ->
+                    Text.translatable("text.disable_entity.value.fps", value)
+                )
+                .setTooltip(
+                    Text.translatable(
+                        "text.disable_entity.tooltip.adaptive_target_fps"
+                    )
+                )
+                .build()
+        );
+        generalCategory.addEntry(
+            entryBuilder
+                .startIntSlider(
+                    Text.translatable(
+                        "text.disable_entity.option.adaptive_delay"
+                    ),
+                    config.adaptiveEscalationDelaySeconds,
+                    1,
+                    60
+                )
+                .setDefaultValue(5)
+                .setSaveConsumer(value -> config.adaptiveEscalationDelaySeconds = value)
+                .setTextGetter(value ->
+                    Text.translatable("text.disable_entity.value.seconds", value)
+                )
+                .setTooltip(
+                    Text.translatable(
+                        "text.disable_entity.tooltip.adaptive_delay"
+                    )
+                )
+                .build()
+        );
 
         ConfigCategory entityCategory = builder.getOrCreateCategory(
             Text.translatable("text.disable_entity.category.entities")

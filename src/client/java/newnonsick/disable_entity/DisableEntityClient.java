@@ -5,6 +5,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.MinecraftClient;
 import newnonsick.disable_entity.client.keybind.DisableEntityKeybindManager;
+import newnonsick.disable_entity.client.util.AdaptiveTuningManager;
 import newnonsick.disable_entity.client.util.FpsSampler;
 import newnonsick.disable_entity.config.DisableEntityConfigManager;
 
@@ -19,6 +20,7 @@ public final class DisableEntityClient implements ClientModInitializer {
         DisableEntityKeybindManager.register();
         registerServerProfileHooks();
         ClientTickEvents.END_CLIENT_TICK.register(client -> FpsSampler.getInstance().onClientTick());
+        ClientTickEvents.END_CLIENT_TICK.register(client -> AdaptiveTuningManager.getInstance().onClientTick(client));
         DisableEntity.LOGGER.info("Client optimization hooks registered.");
     }
 
