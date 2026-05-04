@@ -177,7 +177,7 @@ Server profiles are stored at:
 .minecraft/config/disable-entity-profiles.json
 ```
 
-- `configVersion` is managed automatically (current: `3`).
+- `configVersion` is managed automatically (current: `4`).
 - Corrupted configs are backed up to `disable-entity.json.broken` and reset to defaults.
 
 ### Presets

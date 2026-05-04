@@ -9,7 +9,7 @@ import newnonsick.disable_entity.util.ParticleFilterMode;
  * Strongly typed configuration model for all optimization controls.
  */
 public final class DisableEntityConfig {
-    public static final int CURRENT_CONFIG_VERSION = 3;
+    public static final int CURRENT_CONFIG_VERSION = 4;
     public static final int MIN_RENDER_DISTANCE = 0;
     public static final int MAX_ENTITY_RENDER_DISTANCE = 512;
     public static final int DEFAULT_ENTITY_RENDER_DISTANCE = 96;
@@ -69,8 +69,16 @@ public final class DisableEntityConfig {
                 MIN_RENDER_DISTANCE, MAX_ENTITY_RENDER_DISTANCE);
         distanceCulling.blockEntityRenderDistance = MathHelper.clamp(distanceCulling.blockEntityRenderDistance,
                 MIN_RENDER_DISTANCE, MAX_BLOCK_ENTITY_RENDER_DISTANCE);
-        adaptiveTargetFps = MathHelper.clamp(adaptiveTargetFps, 1, 240);
-        adaptiveEscalationDelaySeconds = MathHelper.clamp(adaptiveEscalationDelaySeconds, 1, 60);
+        if (adaptiveTargetFps <= 0) {
+            adaptiveTargetFps = 30;
+        } else {
+            adaptiveTargetFps = MathHelper.clamp(adaptiveTargetFps, 1, 240);
+        }
+        if (adaptiveEscalationDelaySeconds <= 0) {
+            adaptiveEscalationDelaySeconds = 5;
+        } else {
+            adaptiveEscalationDelaySeconds = MathHelper.clamp(adaptiveEscalationDelaySeconds, 1, 60);
+        }
     }
 
     public static final class EntityRendering {
