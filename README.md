@@ -1,116 +1,244 @@
 # Disable Entity
 
-A client-side Fabric mod for Minecraft 1.21.8 that selectively disables expensive visual rendering to improve performance.
+<p align="center">
+  <a href="#"><img src="https://img.shields.io/badge/Minecraft-1.21.8-62B47A?style=flat-square&logo=minecraft&logoColor=white" alt="Minecraft 1.21.8"></a>
+  <a href="#"><img src="https://img.shields.io/badge/Fabric-Client--only-DBD0B0?style=flat-square" alt="Fabric Client-only"></a>
+  <a href="#"><img src="https://img.shields.io/badge/Java-%3E%3D%2021-b07219?style=flat-square&logo=openjdk&logoColor=white" alt="Java 21+"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue?style=flat-square" alt="MIT License"></a>
+  <a href="#"><img src="https://img.shields.io/badge/Version-1.0.0-ff69b4?style=flat-square" alt="Version 1.0.0"></a>
+</p>
+
+<p align="center">
+  A client-side Fabric mod that selectively disables expensive visual rendering to improve FPS without affecting server logic, networking, or collision.
+</p>
+
+---
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Features](#features)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Compatibility](#compatibility)
+- [Building from Source](#building-from-source)
+- [Project Structure](#project-structure)
+- [Testing](#testing)
+- [License](#license)
+- [Acknowledgments](#acknowledgments)
+
+---
 
 ## Overview
 
-Disable Entity is a client-side optimization mod that reduces rendering overhead by selectively skipping expensive visual work. It operates entirely on the client side, leaving server logic, packets, ticking, and collision unaffected. The mod integrates with Minecraft's render pipeline at the dispatcher level, ensuring broad compatibility with other optimization mods.
+**Disable Entity** operates entirely on the client. It injects into Minecraft's vanilla render dispatchers to skip expensive visual work before it reaches the GPU, leaving server-side ticking, packets, physics, and collision completely untouched. The mod is built with broad compatibility in mind: it never replaces core renderers or framebuffers, making it safe to run alongside most modern optimization mods.
+
+Whether you need to boost FPS in dense modded worlds, clean up visual clutter for cinematics, or automatically tune settings per-server, Disable Entity provides granular, non-destructive controls.
+
+---
 
 ## Features
 
-### Entity Management
-- Hide entities by category (players, hostile mobs, passive mobs, items, projectiles, armor stands, etc.)
-- Configurable per-entity-type controls
-- Preserves essential gameplay interactions
+### Global Control
+- **Master Toggle** — Enable or pause all optimizations instantly without losing your detailed choices.
 
-### Visual Optimizations
-- **Entity Shadows**: Suppress shadow rendering for all entities
-- **Nametags**: Hide nametags for players, mobs, and armor stands
-- **Particles**: Filter particles with whitelist/blacklist modes across 9 categories
-- **Block Entities**: Hide expensive block entities (chests, signs, beacons, spawners, etc.)
-- **Dynamic Block States**: Freeze or simplify block state updates (redstone, pistons, doors, rails, etc.)
+### Entity Rendering
+Hide specific entity types before expensive per-entity render work begins:
+- Players, hostile mobs, passive/ambient mobs
+- Item drops, projectiles, experience orbs
+- Armor stands, item frames, paintings, leash knots
+- Display entities (block, item, text), vehicles (boats, minecarts), miscellaneous
+- **Safeguards**: optionally preserve named entities and tamed pets
 
-### Distance-Based Culling
-- Configurable render distance for entities (0-512 blocks)
-- Configurable render distance for block entities (0-256 blocks)
-- Reduce overdraw in large modded worlds
+### Entity Shadows
+- Suppress shadow rendering for all entities globally.
+
+### Nametags
+- Hide nametags/labels for players, mobs, and armor stands independently.
+
+### Particles
+- **Filter modes**: All, Whitelist, or Blacklist
+- **Categories**: Block, Item, Smoke, Flame, Explosion, Spell, Water, Redstone, Ambient, Other
+
+### Block Entities
+Skip costly block entity renderers before they are queried:
+- Chests (including trapped and ender chests), barrels
+- Signs (standing and hanging), banners
+- Beacons, mob spawners, shulker boxes
+- Furnaces, blast furnaces, smokers
+- Enchanting tables, miscellaneous block entities
+
+### Dynamic Block State Freezing
+Freeze the *visual appearance* of frequently updating blocks to stop constant model rebuilds. Server-side logic remains fully functional.
+- Redstone components, pistons, doors/trapdoors, rails
+- Sculk sensors, crafters, observers
+- Repeaters, comparators, bells
+- Other dynamic blocks
 
 ### World Rendering
-- Disable clouds, weather effects, vignette, hand bob, fog, and overlays
+Disable expensive environmental and camera effects:
+- Clouds, weather (rain/snow), fog
+- Vignette, view bobbing, screen overlays (pumpkin, freezing, portal)
 
-### Presets
-Four built-in presets for quick optimization:
-- **Custom**: User-defined settings
-- **Balanced**: Recommended settings with player visibility maintained
-- **Performance**: Aggressive optimization hiding all non-essential entities
-- **Aggressive**: Maximum performance with 32-block render distance
+### Distance Culling
+Apply lightweight distance limits as an early-out before rendering work begins:
+- Entity render distance: **0–512 blocks** (default: 96)
+- Block entity render distance: **0–256 blocks** (default: 64)
+- Automatically defers to **EntityCulling** or **MoreCulling** when present.
+
+### Optimization Presets
+Four built-in presets for quick setup. Manual changes automatically switch the preset back to **Custom**.
+
+| Preset | Description |
+|--------|-------------|
+| **Custom** | Your own manually selected settings |
+| **Balanced** | Recommended defaults; preserves player visibility and common block entities |
+| **Performance** | Aggressive hiding of non-essential entities; 64-block entity / 48-block block-entity culling |
+| **Aggressive** | Maximum optimization; 32-block render distance for both entities and block entities |
+
+### Adaptive Tuning
+Monitors your average FPS and prompts you to escalate to a higher optimization preset if frame rate stays below a configurable target for a set number of seconds.
+
+### Runtime Hotkeys
+11 configurable keybinds for instant in-game toggling (default keys shown):
+
+| Key | Action |
+|-----|--------|
+| `Insert` | Toggle all optimizations |
+| `Home` | Toggle entity hiding |
+| `End` | Toggle particle hiding |
+| `Page Up` | Toggle block entity hiding |
+| `Page Down` | Toggle nametag hiding |
+| `F7` | Toggle block state freezing |
+| `F8` | Toggle world rendering |
+| `F6` | Toggle performance overlay |
+| `Delete` | Reset to defaults |
+| `Print Screen` | Copy configuration to clipboard |
+| `Scroll Lock` | Paste configuration from clipboard |
+
+### Performance Overlay
+A small HUD element showing how many entities, block entities, particles, nametags, shadows, world features, and frozen block states were skipped each frame.
+
+### FPS Delta Feedback
+Optional temporary on-screen message that estimates the FPS change ~2 seconds after toggling a feature.
+
+### Server Profiles
+Automatically save and load configuration profiles per multiplayer server address. Profiles are stored separately from your global config.
+
+### Config Import / Export
+Copy your active configuration as JSON to the system clipboard and paste it into another installation.
+
+---
 
 ## Requirements
 
-| Requirement | Version |
-|-------------|---------|
-| Minecraft   | 1.21.8  |
-| Fabric Loader | >= 0.19.2 |
-| Java        | >= 21    |
-| Fabric API  | *        |
-| Cloth Config | >= 19.0.147 |
+| Dependency | Version |
+|------------|---------|
+| Minecraft | **1.21.8** |
+| Fabric Loader | **>= 0.19.2** |
+| Java | **>= 21** |
+| Fabric API | any |
+| Cloth Config | **>= 19.0.147** |
+
+**Suggested (optional):**
+- [ModMenu](https://modrinth.com/mod/modmenu) — provides the in-game settings screen entrypoint.
+
+> This mod is **client-only**. It does not need to be installed on the server and has no server-side component.
+
+---
 
 ## Installation
 
-1. Install [Fabric Loader](https://fabricmc.net/) for Minecraft 1.21.8
-2. Install [Fabric API](https://modrinth.com/mod/fabric-api)
-3. Install [Cloth Config](https://modrinth.com/mod/cloth-config)
-4. Download the latest release
-5. Place the `.jar` file in your `mods` folder
-6. Launch the game
+1. Install [Fabric Loader](https://fabricmc.net/use/) for Minecraft **1.21.8**.
+2. Download and place the following in your `mods` folder:
+   - [Fabric API](https://modrinth.com/mod/fabric-api)
+   - [Cloth Config](https://modrinth.com/mod/cloth-config)
+   - **Disable Entity** `.jar`
+3. Launch the game.
+
+---
 
 ## Configuration
 
-### GUI Configuration
-Access settings through **Mod Menu** in the main menu or in-game pause menu.
+### In-Game GUI (Recommended)
+If **ModMenu** is installed, open **Options &rarr; Mods &rarr; Disable Entity &rarr; Configure** from the main menu or pause screen.
 
 ### Manual Configuration
-The config file is located at:
+The configuration file is located at:
+
 ```
-config/disable-entity.json
+.minecraft/config/disable-entity.json
 ```
+
+Server profiles are stored at:
+
+```
+.minecraft/config/disable-entity-profiles.json
+```
+
+- `configVersion` is managed automatically (current: `3`).
+- Corrupted configs are backed up to `disable-entity.json.broken` and reset to defaults.
+
+### Presets
+Select a preset in the GUI or apply one programmatically. The active preset is persisted; manual changes revert the preset to **Custom**.
 
 ### Keybinds
-Toggle features using in-game keybinds configured in Controls.
+All runtime toggles can be rebound in **Options &rarr; Controls &rarr; Key Binds &rarr; Disable Entity**.
 
-### Import/Export
-Export your configuration to JSON and import it on other installations.
+---
 
 ## Compatibility
 
-Disable Entity is designed to work alongside popular optimization mods:
+Disable Entity is designed to coexist with major optimization mods by staying on vanilla dispatcher-level hooks and never replacing renderers or framebuffers.
 
-| Mod | Status |
-|-----|--------|
-| Sodium | Compatible |
-| Iris | Compatible |
-| EntityCulling | Compatible |
-| Lithium | Compatible |
-| MoreCulling | Compatible |
-| ImmediatelyFast | Compatible |
-| Enhanced Block Entities | Compatible |
-| Dynamic FPS | Compatible |
-| Indium | Compatible |
-| Continuity | Compatible |
+| Mod | Compatibility Notes |
+|-----|---------------------|
+| **Sodium** | Uses dispatcher-level cancellation only |
+| **Iris** | No framebuffer or shader pipeline hooks |
+| **EntityCulling** | Detected; mod avoids custom occlusion logic and disables overlapping distance culling |
+| **Lithium** | No server-side behavior modified |
+| **MoreCulling** | Detected; stays on vanilla dispatcher hooks and disables overlapping distance culling |
+| **ImmediatelyFast** | No framebuffer or buffer-system hooks |
+| **Enhanced Block Entities** | Block-entity filtering remains non-invasive |
+| **Dynamic FPS** | Does not alter focus or tick-rate behavior |
+| **Indium** | Block-state freezing uses dispatcher-level hooks |
+| **Continuity** | Connected textures remain active on frozen block states |
 
-The mod uses vanilla-dispatcher level hooks to remain non-invasive and compatible with mods that replace rendering systems.
+---
 
 ## Building from Source
 
 ### Prerequisites
-- Java 21 or higher
-- Gradle 9.x
+- Java **21** or newer
+- Gradle (wrapper included)
 
-### Build Commands
+### Commands
 
 ```bash
 # Clone the repository
 git clone https://github.com/newnonsick/disable-entity.git
 cd disable-entity
 
-# Build the mod
+# Build the mod JAR
 ./gradlew build
 
-# Run the development environment
+# Run the development client
 ./gradlew runClient
+
+# Run unit tests
+./gradlew test
 ```
 
-The built JAR will be located at `build/libs/`.
+The built artifact will be at:
+
+```
+build/libs/disable-entity-1.0.0.jar
+```
+
+> **Note:** IntelliJ IDEA is not fully compatible with the version of fabric-loom used in this project. Use command-line Gradle for reliable builds.
+
+---
 
 ## Project Structure
 
@@ -119,32 +247,56 @@ disable-entity/
 ├── src/
 │   ├── main/
 │   │   ├── java/newnonsick/disable_entity/
-│   │   │   ├── config/          # Configuration management
-│   │   │   ├── compat/         # Mod compatibility detection
-│   │   │   └── util/           # Utility classes
+│   │   │   ├── config/          # Config model, manager, presets
+│   │   │   ├── compat/          # Mod-compatibility detection
+│   │   │   └── util/            # Shared utilities (particle categories, block registry)
 │   │   └── resources/
-│   ├── client/                  # Client-side mixins
-│   └── test/                    # Unit tests
-├── gradle/wrapper/              # Gradle wrapper
-├── build.gradle                 # Build configuration
-├── gradle.properties            # Project properties
-└── LICENSE                      # License file
+│   │       ├── assets/disable-entity/   # Textures, language, icon
+│   │       ├── fabric.mod.json
+│   │       └── disable-entity.client.mixins.json
+│   ├── client/
+│   │   ├── java/newnonsick/disable_entity/
+│   │   │   ├── client/          # GUI, keybinds, ModMenu entrypoint
+│   │   │   ├── mixin/           # Client-side mixins (entity, particle, world, block states)
+│   │   │   └── util/            # RenderRules, PerformanceTracker, AdaptiveTuningManager
+│   │   └── resources/
+│   └── test/
+│       └── java/newnonsick/disable_entity/   # JUnit 5 tests
+├── build.gradle
+├── gradle.properties
+└── LICENSE
 ```
+
+---
 
 ## Testing
 
-The project includes unit tests for configuration management, optimization presets, and utility classes:
+The project includes JUnit 5 tests covering:
+
+- Configuration sanitization and migration
+- Optimization preset detection and application
+- Compatibility decision logic
+- Thread safety of the config manager (`ReentrantReadWriteLock`)
+- Dynamic block registry behavior
+
+Run tests with:
 
 ```bash
 ./gradlew test
 ```
 
+---
+
 ## License
 
-This project is licensed under [MIT](LICENSE).
+This project is licensed under the [MIT License](LICENSE).
+
+Copyright (c) 2026 Thitivath Mongkolgittichot
+
+---
 
 ## Acknowledgments
 
-- [Fabric](https://fabricmc.net/) for the mod loader
-- [Cloth](https://shedaniel.gitlab.io/cloth-config/) for the config UI
-- [Fabric community](https://fabricmc.net/wiki/community:start) for continued support
+- [FabricMC](https://fabricmc.net/) — for the mod loader and tooling
+- [Cloth Config](https://shedaniel.gitlab.io/cloth-config/) — for the configuration GUI
+- [ModMenu](https://modrinth.com/mod/modmenu) — for in-game mod screen integration
