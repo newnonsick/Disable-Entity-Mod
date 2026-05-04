@@ -2,7 +2,6 @@ package newnonsick.disable_entity.client.util;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
-import newnonsick.disable_entity.DisableEntity;
 import newnonsick.disable_entity.config.DisableEntityConfig;
 import newnonsick.disable_entity.config.DisableEntityConfigManager;
 import newnonsick.disable_entity.config.OptimizationPreset;

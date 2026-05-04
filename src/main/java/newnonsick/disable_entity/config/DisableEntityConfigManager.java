@@ -8,10 +8,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.google.gson.Gson;
@@ -40,7 +39,7 @@ public final class DisableEntityConfigManager {
     private static volatile boolean configWasCorrupted;
 
     private static final Path PROFILES_PATH = FabricLoader.getInstance().getConfigDir().resolve("disable-entity-profiles.json");
-    private static final Map<String, DisableEntityConfig> serverProfiles = new HashMap<>();
+    private static final Map<String, DisableEntityConfig> serverProfiles = new ConcurrentHashMap<>();
     private static volatile String activeServerAddress;
 
     private DisableEntityConfigManager() {
@@ -180,8 +179,9 @@ public final class DisableEntityConfigManager {
                 preset = OptimizationPreset.CUSTOM;
             }
 
-            preset.apply(config);
-            config.activePreset = preset;
+            DisableEntityConfig target = getConfig();
+            preset.apply(target);
+            target.activePreset = preset;
             saveInternal(false, preset);
         } finally {
             WRITE_LOCK.unlock();
@@ -192,9 +192,10 @@ public final class DisableEntityConfigManager {
         WRITE_LOCK.lock();
         try {
             ensureLoaded();
-            config.globalEnabled = !config.globalEnabled;
+            DisableEntityConfig target = getConfig();
+            target.globalEnabled = !target.globalEnabled;
             saveInternal(true, null);
-            return config.globalEnabled;
+            return target.globalEnabled;
         } finally {
             WRITE_LOCK.unlock();
         }
@@ -204,9 +205,10 @@ public final class DisableEntityConfigManager {
         WRITE_LOCK.lock();
         try {
             ensureLoaded();
-            config.entityRendering.enabled = !config.entityRendering.enabled;
+            DisableEntityConfig target = getConfig();
+            target.entityRendering.enabled = !target.entityRendering.enabled;
             saveInternal(true, null);
-            return config.entityRendering.enabled;
+            return target.entityRendering.enabled;
         } finally {
             WRITE_LOCK.unlock();
         }
@@ -216,9 +218,10 @@ public final class DisableEntityConfigManager {
         WRITE_LOCK.lock();
         try {
             ensureLoaded();
-            config.particles.enabled = !config.particles.enabled;
+            DisableEntityConfig target = getConfig();
+            target.particles.enabled = !target.particles.enabled;
             saveInternal(true, null);
-            return config.particles.enabled;
+            return target.particles.enabled;
         } finally {
             WRITE_LOCK.unlock();
         }
@@ -228,9 +231,10 @@ public final class DisableEntityConfigManager {
         WRITE_LOCK.lock();
         try {
             ensureLoaded();
-            config.blockEntities.enabled = !config.blockEntities.enabled;
+            DisableEntityConfig target = getConfig();
+            target.blockEntities.enabled = !target.blockEntities.enabled;
             saveInternal(true, null);
-            return config.blockEntities.enabled;
+            return target.blockEntities.enabled;
         } finally {
             WRITE_LOCK.unlock();
         }
@@ -240,9 +244,10 @@ public final class DisableEntityConfigManager {
         WRITE_LOCK.lock();
         try {
             ensureLoaded();
-            config.nametags.enabled = !config.nametags.enabled;
+            DisableEntityConfig target = getConfig();
+            target.nametags.enabled = !target.nametags.enabled;
             saveInternal(true, null);
-            return config.nametags.enabled;
+            return target.nametags.enabled;
         } finally {
             WRITE_LOCK.unlock();
         }
@@ -252,9 +257,10 @@ public final class DisableEntityConfigManager {
         WRITE_LOCK.lock();
         try {
             ensureLoaded();
-            config.blockStates.enabled = !config.blockStates.enabled;
+            DisableEntityConfig target = getConfig();
+            target.blockStates.enabled = !target.blockStates.enabled;
             saveInternal(true, null);
-            return config.blockStates.enabled;
+            return target.blockStates.enabled;
         } finally {
             WRITE_LOCK.unlock();
         }
@@ -264,9 +270,10 @@ public final class DisableEntityConfigManager {
         WRITE_LOCK.lock();
         try {
             ensureLoaded();
-            config.worldRendering.enabled = !config.worldRendering.enabled;
+            DisableEntityConfig target = getConfig();
+            target.worldRendering.enabled = !target.worldRendering.enabled;
             saveInternal(true, null);
-            return config.worldRendering.enabled;
+            return target.worldRendering.enabled;
         } finally {
             WRITE_LOCK.unlock();
         }
@@ -340,13 +347,8 @@ public final class DisableEntityConfigManager {
         try {
             ensureLoaded();
             DisableEntityConfig current = getConfig();
-            String json = GSON.toJson(current);
-            DisableEntityConfig copy = GSON.fromJson(json, DisableEntityConfig.class);
-            if (copy != null) {
-                copy.sanitize();
-                serverProfiles.put(address, copy);
-                writeProfiles();
-            }
+            serverProfiles.put(address, current);
+            writeProfiles();
         } finally {
             WRITE_LOCK.unlock();
         }
@@ -425,7 +427,7 @@ public final class DisableEntityConfigManager {
 
     private static Map<String, DisableEntityConfig> readProfiles() {
         if (!Files.exists(PROFILES_PATH)) {
-            return new HashMap<>();
+            return new ConcurrentHashMap<>();
         }
 
         try (Reader reader = Files.newBufferedReader(PROFILES_PATH)) {
@@ -436,12 +438,12 @@ public final class DisableEntityConfigManager {
                 for (DisableEntityConfig profile : parsed.values()) {
                     profile.sanitize();
                 }
-                return parsed;
+                return new ConcurrentHashMap<>(parsed);
             }
         } catch (JsonParseException | IOException exception) {
             DisableEntity.LOGGER.error("Failed to read profiles file {}, using empty map.", PROFILES_PATH, exception);
         }
-        return new HashMap<>();
+        return new ConcurrentHashMap<>();
     }
 
     private static void writeProfiles() {
